@@ -56,9 +56,10 @@ def _connect(store_path: Path) -> sqlite3.Connection:
             series_id TEXT NOT NULL,
             episode_id TEXT NOT NULL,
             target_language TEXT NOT NULL,
+            output_mode TEXT NOT NULL,
             status TEXT NOT NULL,
             draft_root TEXT NOT NULL,
-            source_video TEXT NOT NULL,
+            source_video TEXT,
             rights_path TEXT NOT NULL,
             rights_sha256 TEXT NOT NULL,
             created_at TEXT NOT NULL,
@@ -89,21 +90,26 @@ def create_episode_job(
     target_language: str,
     rights_path: Path,
     draft_root: Path,
-    source_video: Path,
+    source_video: Path | None = None,
+    output_mode: str = "final",
 ) -> dict[str, Any]:
     _validate_identifier("series ID", series_id)
     _validate_identifier("episode ID", episode_id)
     if not re.fullmatch(r"[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*", target_language):
         raise JobStateError(f"Invalid target language: {target_language!r}")
+    if output_mode not in {"editor", "final"}:
+        raise JobStateError(f"Invalid output mode: {output_mode!r}")
 
     rights_path = rights_path.expanduser().resolve()
     draft_root = draft_root.expanduser().resolve()
-    source_video = source_video.expanduser().resolve()
+    source_video = source_video.expanduser().resolve() if source_video else None
     if not rights_path.is_file():
         raise FileNotFoundError(f"Rights manifest not found: {rights_path}")
     if not draft_root.is_dir():
         raise FileNotFoundError(f"Draft directory not found: {draft_root}")
-    if not source_video.is_file():
+    if output_mode == "final" and source_video is None:
+        raise JobStateError("Final output mode requires a clean no-subtitle video")
+    if source_video is not None and not source_video.is_file():
         raise FileNotFoundError(f"Source video not found: {source_video}")
 
     load_rights(rights_path).assert_authorized(target_language)
@@ -114,9 +120,10 @@ def create_episode_job(
         "series_id": series_id,
         "episode_id": episode_id,
         "target_language": target_language,
+        "output_mode": output_mode,
         "status": STAGES[0],
         "draft_root": str(draft_root),
-        "source_video": str(source_video),
+        "source_video": str(source_video) if source_video else None,
         "rights_path": str(rights_path),
         "rights_sha256": _sha256(rights_path),
         "created_at": timestamp,
@@ -126,10 +133,14 @@ def create_episode_job(
         try:
             connection.execute(
                 """
-                INSERT INTO episode_jobs VALUES (
-                    :job_id, :series_id, :episode_id, :target_language, :status,
-                    :draft_root, :source_video, :rights_path, :rights_sha256,
-                    :created_at, :updated_at
+                INSERT INTO episode_jobs (
+                    job_id, series_id, episode_id, target_language, output_mode,
+                    status, draft_root, source_video, rights_path, rights_sha256,
+                    created_at, updated_at
+                ) VALUES (
+                    :job_id, :series_id, :episode_id, :target_language,
+                    :output_mode, :status, :draft_root, :source_video,
+                    :rights_path, :rights_sha256, :created_at, :updated_at
                 )
                 """,
                 record,

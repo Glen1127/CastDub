@@ -22,6 +22,16 @@ class SynthesizedTake:
     parameters: dict[str, str | int | float | bool]
 
 
+@dataclass(frozen=True)
+class PerformanceDescriptor:
+    emotion: str
+    intensity: float
+    speaking_rate: float
+    pause_boundaries_ms: tuple[int, ...]
+    breath_boundaries_ms: tuple[int, ...]
+    reference_audio: Path
+
+
 class SeparatorProvider(Protocol):
     def separate(self, source_audio: Path, output_dir: Path) -> dict[str, Path]: ...
 
@@ -34,6 +44,12 @@ class AlignmentProvider(Protocol):
 
 class DiarizationProvider(Protocol):
     def diarize(self, dialogue_audio: Path) -> Sequence[TimedUtterance]: ...
+
+
+class PerformanceAnalysisProvider(Protocol):
+    def analyse(
+        self, utterance: TimedUtterance, reference_audio: Path
+    ) -> PerformanceDescriptor: ...
 
 
 class TranslationProvider(Protocol):
@@ -50,4 +66,5 @@ class TTSProvider(Protocol):
         target_language: str,
         target_duration_ms: int,
         output_path: Path,
+        performance: PerformanceDescriptor | None = None,
     ) -> SynthesizedTake: ...

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Portable, read-only preflight for a draft + clean-master episode pair."""
+"""Portable, read-only preflight for an episode production job."""
 
 from __future__ import annotations
 
@@ -42,6 +42,7 @@ def main() -> int:
     parser.add_argument("--episode", required=True)
     parser.add_argument("--draft", type=Path)
     parser.add_argument("--video", type=Path)
+    parser.add_argument("--output-mode", choices=("editor", "final"), default="final")
     parser.add_argument("--rights-confirmed", action="store_true")
     parser.add_argument("--duration-tolerance-ms", type=int, default=1000)
     args = parser.parse_args()
@@ -58,22 +59,28 @@ def main() -> int:
             ],
             "matching draft directory",
         )
-        video = args.video.resolve() if args.video else one(
-            [
-                path
-                for path in (root / "resource" / "剧集").iterdir()
-                if path.is_file()
-                and episode.casefold() in path.name.casefold()
-                and "无字幕" in path.name
-            ],
-            "matching no-subtitle video",
-        )
+        video = args.video.resolve() if args.video else None
+        if video is None and args.output_mode == "final":
+            video = one(
+                [
+                    path
+                    for path in (root / "resource" / "剧集").iterdir()
+                    if path.is_file()
+                    and episode.casefold() in path.name.casefold()
+                    and "无字幕" in path.name
+                ],
+                "matching no-subtitle video",
+            )
         draft_file = one(list(draft_root.glob("draft_content.json")), "draft_content.json")
         draft = json.loads(draft_file.read_text(encoding="utf-8"))
         draft_duration = round(int(draft.get("duration", 0)) / 1000)
-        video_duration = duration_ms(video)
-        delta = abs(draft_duration - video_duration)
-        if delta > args.duration_tolerance_ms:
+        video_duration = duration_ms(video) if video else None
+        delta = (
+            abs(draft_duration - video_duration)
+            if video_duration is not None
+            else None
+        )
+        if delta is not None and delta > args.duration_tolerance_ms:
             errors.append(f"duration mismatch: {delta} ms")
         if not args.rights_confirmed:
             errors.append("rights not explicitly confirmed")
@@ -81,9 +88,10 @@ def main() -> int:
         report = {
             "ok": not errors,
             "episode": episode,
+            "output_mode": args.output_mode,
             "draft_root": str(draft_root),
             "draft_file": str(draft_file),
-            "clean_video": str(video),
+            "clean_video": str(video) if video else None,
             "draft_duration_ms": draft_duration,
             "video_duration_ms": video_duration,
             "duration_delta_ms": delta,

@@ -9,8 +9,8 @@
 - No missing, truncated, duplicated, or overlapping lines outside intentional dialogue overlap.
 - Every line fits its approved window; any tempo correction stays within project limits.
 - Original music, ambience, and effects are present without audible source-dialogue leakage that changes meaning.
-- Final video uses the clean no-subtitle master and contains no source-language burned subtitles.
-- Output duration, frame rate, dimensions, audio layout, and subtitle safe area pass validation.
+- When final-video output is requested, it uses the clean no-subtitle master and contains no source-language burned subtitles.
+- Requested outputs pass their applicable duration, audio-layout, frame, dimension, and subtitle-safe-area validation.
 
 Lip sync is non-blocking in the first production phase.
 
@@ -32,7 +32,7 @@ projects/<episode-job>/
   qc/                     reports and logs
   deliverables/
     editor/               dialogue-only WAV, full-mix WAV, target/bilingual subtitles, timeline
-    final/                burned-subtitle MP4, sidecar subtitles, QC
+    final/                optional: burned-subtitle MP4, sidecar subtitles, QC
     reports/              elapsed time and local/API cost estimates
 ```
 

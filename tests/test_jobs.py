@@ -78,6 +78,45 @@ class EpisodeJobTests(unittest.TestCase):
             self.assertEqual(advanced["status"], "inputs_verified")
             self.assertEqual(resumed["status"], "inputs_verified")
 
+    def test_editor_mode_does_not_require_clean_master(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rights = root / "rights.json"
+            draft = root / "draft"
+            draft.mkdir()
+            write_rights(rights)
+
+            job = create_episode_job(
+                root / "jobs.sqlite3",
+                "test-series",
+                "EP01",
+                "en-US",
+                rights,
+                draft,
+                output_mode="editor",
+            )
+
+            self.assertEqual(job["output_mode"], "editor")
+            self.assertIsNone(job["source_video"])
+
+    def test_final_mode_requires_clean_master(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rights = root / "rights.json"
+            draft = root / "draft"
+            draft.mkdir()
+            write_rights(rights)
+
+            with self.assertRaisesRegex(JobStateError, "clean no-subtitle video"):
+                create_episode_job(
+                    root / "jobs.sqlite3",
+                    "test-series",
+                    "EP01",
+                    "en-US",
+                    rights,
+                    draft,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

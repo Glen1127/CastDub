@@ -11,6 +11,7 @@ from castdub.jianying_export import export_localized_draft
 from castdub.jobs import create_episode_job, get_episode_job
 from castdub.pilot import run_pilot
 from castdub.project import create_project, load_rights
+from castdub.reverse import run_reverse
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,9 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
     start_parser.add_argument("--series-id", required=True)
     start_parser.add_argument("--episode-id", required=True)
     start_parser.add_argument("--target-language", required=True)
+    start_parser.add_argument(
+        "--output-mode", choices=("editor", "final"), default="final"
+    )
     start_parser.add_argument("--rights", type=Path, required=True)
     start_parser.add_argument("--draft-root", type=Path, required=True)
-    start_parser.add_argument("--source-video", type=Path, required=True)
+    start_parser.add_argument("--source-video", type=Path)
 
     status_parser = subparsers.add_parser(
         "job-status", help="Read compact persisted state for one episode job"
@@ -73,6 +77,18 @@ def build_parser() -> argparse.ArgumentParser:
     export_parser.add_argument("--output-draft", type=Path, required=True)
     export_parser.add_argument("--dialogue-wav", type=Path, required=True)
     export_parser.add_argument("--qc-report", type=Path, required=True)
+
+    reverse_parser = subparsers.add_parser(
+        "reverse", help="Reverse a finished video into an editable multimodal blueprint"
+    )
+    reverse_parser.add_argument("video", type=Path)
+    reverse_parser.add_argument("--output", type=Path, required=True)
+    reverse_parser.add_argument("--scene-threshold", type=float, default=27.0)
+    reverse_parser.add_argument("--vision-base-url")
+    reverse_parser.add_argument("--vision-model")
+    reverse_parser.add_argument("--demucs-model-repository", type=Path)
+    reverse_parser.add_argument("--whisper-model-path", type=Path)
+    reverse_parser.add_argument("--jianying-template", type=Path)
     return parser
 
 
@@ -102,6 +118,7 @@ def main(argv: list[str] | None = None) -> None:
                     series_id=args.series_id,
                     episode_id=args.episode_id,
                     target_language=args.target_language,
+                    output_mode=args.output_mode,
                     rights_path=args.rights,
                     draft_root=args.draft_root,
                     source_video=args.source_video,
@@ -147,5 +164,17 @@ def main(argv: list[str] | None = None) -> None:
             output_draft_root=args.output_draft,
             dialogue_wav=args.dialogue_wav,
             qc_report=args.qc_report,
+        )
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    elif args.command == "reverse":
+        report = run_reverse(
+            args.video,
+            args.output,
+            scene_threshold=args.scene_threshold,
+            vision_base_url=args.vision_base_url,
+            vision_model=args.vision_model,
+            demucs_model_repository=args.demucs_model_repository,
+            whisper_model_path=args.whisper_model_path,
+            jianying_template=args.jianying_template,
         )
         print(json.dumps(report, ensure_ascii=False, indent=2))

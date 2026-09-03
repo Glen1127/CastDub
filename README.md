@@ -7,7 +7,10 @@ The reusable production workflow lives at
 Copy that whole skill directory into a compatible agent's skills directory, or
 give its `SKILL.md` to an agent that supports filesystem and process tools.
 
-Local-first, open-source production tooling for authorised multi-character film and drama localisation.
+Local-first, open-source production tooling for authorised multi-character film
+and drama localisation: character-aware performance analysis, stable
+cross-language voice cloning, emotion/prosody transfer, automatic dubbing,
+duration fitting, soundtrack preservation, and subtitle reconstruction.
 
 The first milestone converts a 3–5 minute Chinese scene with at least three speaking characters into an English dubbed video while preserving the original picture, music, ambience, and effects. Lip synchronisation is explicitly not a first-stage acceptance gate.
 
@@ -64,6 +67,21 @@ media path without a model or licensed input:
 PYTHONPATH=src python -m castdub demo --output-dir /tmp/castdub-demo
 ```
 
+Reverse a finished episode into factual shot data, optional semantic analysis,
+an editor-neutral blueprint, and an independent Jianying project copy:
+
+```bash
+PYTHONPATH=src python -m castdub reverse resource/剧集/EP01.mp4 \
+  --output resource/剧集/EP01.reverse \
+  --jianying-template 'resource/剧集Project/EP01 '
+```
+
+The command never installs packages or downloads models. PySceneDetect is the
+preferred shot detector; FFmpeg supplies a deterministic fallback. OpenCV,
+Qwen3-VL through an OpenAI-compatible local endpoint, Demucs `htdemucs_ft`, and
+faster-whisper report `unavailable` until explicitly configured with installed
+code and local model paths. See `readiness.json` in the output directory.
+
 Register an authorised episode as a resumable job:
 
 ```bash
@@ -72,6 +90,7 @@ PYTHONPATH=src python -m castdub start-episode \
   --series-id example-series \
   --episode-id EP01 \
   --target-language en-US \
+  --output-mode final \
   --rights /private/work/rights.json \
   --draft-root /private/source/EP01-draft \
   --source-video /private/source/EP01-clean.mp4

@@ -3,6 +3,7 @@
   "series_id": "series-id",
   "episode_id": "EP02",
   "target_language": "es-ES",
+  "output_mode": "final",
   "draft_root": "resource/剧集Project/EP02",
   "clean_video": "resource/剧集/EP02（无字幕版）.mp4",
   "work_dir": "projects/ep02-es-ES",

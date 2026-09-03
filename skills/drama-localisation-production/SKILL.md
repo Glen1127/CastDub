@@ -1,16 +1,16 @@
 ---
 name: drama-localisation-production
-description: Produces authorised multi-character drama localisation from a matching Jianying/Douyin draft and clean video master. Use for episode import, voice-cloned dubbing, mixing, subtitles, QC, and delivery.
+description: Produces authorised multi-character drama localisation from a Jianying/Douyin draft, with an optional clean master for final video. Use for voice-cloned dubbing, mixing, subtitles, QC, and delivery.
 ---
 
 # Drama Localisation Production
 
-Run one episode as a traceable production job. Treat the Jianying/Douyin draft as the structured source of dialogue, roles, timing, music, effects, and performance references; treat the no-subtitle video as the final picture master.
+Run one episode as a traceable production job. Treat the Jianying/Douyin draft as the structured source of dialogue, roles, timing, music, effects, and performance references. Require a no-subtitle picture master only when automatic final-video output is requested.
 
 ## Hard gates
 
 - Require explicit translation, dubbing, voice-cloning, and distribution rights before synthesis.
-- Require a matching draft directory and no-subtitle video for the same episode.
+- Always require a matching draft. Require a matching no-subtitle video for final-video output; it is optional for editor-package or localized-draft output.
 - Never modify source assets or overwrite a selected character voice automatically.
 - Never reuse a voice across characters without explicit approval.
 - Never download a model or dependency without presenting its purpose, size, memory, login, and licence requirements and receiving approval.
@@ -20,7 +20,7 @@ Run one episode as a traceable production job. Treat the Jianying/Douyin draft a
 ## Start every episode
 
 1. Read [references/input-contract.md](references/input-contract.md).
-2. Run `scripts/preflight_episode.py --project-root <root> --episode <EPnn> --rights-confirmed`.
+2. Run `scripts/preflight_episode.py --project-root <root> --episode <EPnn> --output-mode <editor|final> --rights-confirmed`.
 3. Stop on missing inputs, duration mismatch, unresolved rights, missing media, or unsupported target language.
 4. Create a new episode work directory. Preserve source files byte-for-byte.
 
@@ -41,7 +41,7 @@ Before synthesis, read [references/providers.md](references/providers.md). Prefe
 Read [references/qc-delivery.md](references/qc-delivery.md). Deliver both:
 
 - Editor package: target dialogue-only WAV, full-mix WAV, target SRT, source/target SRT, editable timeline, role profiles, provenance, QC.
-- Final package: unchanged clean picture with full mix and burned target subtitles, plus sidecar subtitles and QC.
+- Final package: requires the clean picture master; includes the unchanged picture with full mix and burned target subtitles, plus sidecar subtitles and QC.
 
 Default burned-subtitle placement is bottom-centre with `Alignment=2` and `MarginV=18`. Preserve this unless the user requests another safe area.
 

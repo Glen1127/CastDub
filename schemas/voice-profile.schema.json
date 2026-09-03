@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://castdub.local/schemas/voice-profile.schema.json",
+  "title": "Character voice profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_id", "character_id", "authorized_actor", "target_languages",
+    "reference_clips", "provider", "model_revision", "approved"
+  ],
+  "properties": {
+    "profile_id": { "type": "string", "minLength": 1 },
+    "character_id": { "type": "string", "minLength": 1 },
+    "authorized_actor": { "type": "string", "minLength": 1 },
+    "target_languages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "reference_clips": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "transcript", "duration_ms"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "transcript": { "type": "string", "minLength": 1 },
+          "duration_ms": { "type": "integer", "minimum": 3000, "maximum": 10000 }
+        }
+      }
+    },
+    "provider": { "enum": ["qwen3-tts-mlx", "cosyvoice"] },
+    "model_revision": { "type": "string", "minLength": 1 },
+    "approved": { "const": true }
+  }
+}

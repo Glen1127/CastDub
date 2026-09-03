@@ -1,0 +1,54 @@
+---
+name: drama-localisation-production
+description: Produces authorised multi-character drama localisation from a matching Jianying/Douyin draft and clean video master. Use for episode import, voice-cloned dubbing, mixing, subtitles, QC, and delivery.
+---
+
+# Drama Localisation Production
+
+Run one episode as a traceable production job. Treat the Jianying/Douyin draft as the structured source of dialogue, roles, timing, music, effects, and performance references; treat the no-subtitle video as the final picture master.
+
+## Hard gates
+
+- Require explicit translation, dubbing, voice-cloning, and distribution rights before synthesis.
+- Require a matching draft directory and no-subtitle video for the same episode.
+- Never modify source assets or overwrite a selected character voice automatically.
+- Never reuse a voice across characters without explicit approval.
+- Never download a model or dependency without presenting its purpose, size, memory, login, and licence requirements and receiving approval.
+- Never relabel source subtitles as target-language subtitles. Build target subtitles from the final approved script and synthesized speech bounds.
+- Do not make lip sync a first-pass acceptance gate.
+
+## Start every episode
+
+1. Read [references/input-contract.md](references/input-contract.md).
+2. Run `scripts/preflight_episode.py --project-root <root> --episode <EPnn> --rights-confirmed`.
+3. Stop on missing inputs, duration mismatch, unresolved rights, missing media, or unsupported target language.
+4. Create a new episode work directory. Preserve source files byte-for-byte.
+
+## Production route
+
+Read [references/workflow.md](references/workflow.md), then execute its stages in order:
+
+`draft audit -> asset map -> character resolution -> performance references -> scene translation/adaptation -> per-character TTS -> duration loop -> dialogue/background mix -> target subtitles -> clean-master render -> QC -> delivery`
+
+Use an official M&E track when present. Otherwise reconstruct background from draft music/effect tracks; use source separation only as a reviewed fallback.
+
+## Provider routing
+
+Before synthesis, read [references/providers.md](references/providers.md). Prefer an already installed local provider that explicitly supports the target language and cross-language voice cloning. A successful load is not proof of language support.
+
+## Acceptance and delivery
+
+Read [references/qc-delivery.md](references/qc-delivery.md). Deliver both:
+
+- Editor package: target dialogue-only WAV, full-mix WAV, target SRT, source/target SRT, editable timeline, role profiles, provenance, QC.
+- Final package: unchanged clean picture with full mix and burned target subtitles, plus sidecar subtitles and QC.
+
+Default burned-subtitle placement is bottom-centre with `Alignment=2` and `MarginV=18`. Preserve this unless the user requests another safe area.
+
+## Portability
+
+Never hard-code a username, home directory, model cache, or application path. Resolve everything from `--project-root`, the episode job config, environment variables, or tool discovery. For Codex, Claude Code, OpenCode, and generic runners, read [references/platform-adapters.md](references/platform-adapters.md).
+
+## Communication
+
+Write verbose logs to the episode `qc/logs/` directory. Report only start, failure, completion, artifact paths, QC exceptions, unresolved roles, and decisions requiring the user. Reuse cached analysis and synthesis artifacts; do not stream model progress or load large draft JSON into chat.

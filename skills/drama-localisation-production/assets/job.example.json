@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "series_id": "series-id",
+  "episode_id": "EP02",
+  "target_language": "es-ES",
+  "draft_root": "resource/剧集Project/EP02",
+  "clean_video": "resource/剧集/EP02（无字幕版）.mp4",
+  "work_dir": "projects/ep02-es-ES",
+  "rights_file": "resource/rights/EP02.json",
+  "subtitle_style": {
+    "alignment": 2,
+    "margin_v": 18
+  }
+}

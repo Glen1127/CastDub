@@ -1,0 +1,26 @@
+{
+  "source_title": "Authorised pilot scene",
+  "translation_approved": true,
+  "dubbing_approved": true,
+  "overseas_distribution_approved": true,
+  "voice_grants": [
+    {
+      "character_id": "character-a",
+      "voice_cloning_approved": true,
+      "cross_language_approved": true,
+      "permitted_target_languages": ["en-US"]
+    },
+    {
+      "character_id": "character-b",
+      "voice_cloning_approved": true,
+      "cross_language_approved": true,
+      "permitted_target_languages": ["en-US"]
+    },
+    {
+      "character_id": "character-c",
+      "voice_cloning_approved": true,
+      "cross_language_approved": true,
+      "permitted_target_languages": ["en-US"]
+    }
+  ]
+}

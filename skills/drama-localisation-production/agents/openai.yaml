@@ -1,0 +1,6 @@
+interface:
+  display_name: "Drama Localisation Production"
+  short_description: "Run traceable multi-character episode dubbing"
+  default_prompt: "Use $drama-localisation-production to audit and localise the next authorised episode from its matching draft and clean video master."
+policy:
+  allow_implicit_invocation: true

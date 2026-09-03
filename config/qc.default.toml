@@ -1,0 +1,23 @@
+[timing]
+preferred_fit_ratio_min = 0.92
+preferred_fit_ratio_max = 1.08
+maximum_end_overrun_ms = 120
+required_in-window_fraction = 0.95
+
+[audio]
+maximum_true_peak_dbtp = -1.0
+maximum_loudness_difference_lu = 1.0
+
+[subtitles]
+vertical_alignment = "bottom"
+margin_v = 18
+font_name = "Arial"
+font_size = 20
+outline = 2
+shadow = 1
+
+[delivery]
+require_unchanged_video_stream = true
+require_english_subtitles = true
+require_bilingual_subtitles = true
+lip_sync_is_blocking = false

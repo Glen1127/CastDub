@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://castdub.local/schemas/timeline.schema.json",
+  "title": "Editable dialogue timeline",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "cue_id", "start_ms", "end_ms", "speaker_cluster", "character_id",
+      "source_zh", "translation_en", "translation_version", "target_duration_ms",
+      "voice_profile_id", "approval_status"
+    ],
+    "properties": {
+      "cue_id": { "type": "string", "minLength": 1 },
+      "start_ms": { "type": "integer", "minimum": 0 },
+      "end_ms": { "type": "integer", "exclusiveMinimum": 0 },
+      "speaker_cluster": { "type": "string" },
+      "character_id": { "type": "string", "minLength": 1 },
+      "source_zh": { "type": "string", "minLength": 1 },
+      "translation_en": { "type": "string" },
+      "translation_version": { "type": "integer", "minimum": 1 },
+      "emotion": { "type": "string" },
+      "target_duration_ms": { "type": "integer", "exclusiveMinimum": 0 },
+      "tts_take": { "type": ["integer", "null"], "minimum": 1 },
+      "speed_ratio": { "type": "number", "minimum": 0.92, "maximum": 1.08 },
+      "voice_profile_id": { "type": "string", "minLength": 1 },
+      "approval_status": {
+        "enum": ["draft", "translation_approved", "voice_approved", "final"]
+      }
+    }
+  }
+}

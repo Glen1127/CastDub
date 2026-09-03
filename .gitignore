@@ -1,0 +1,28 @@
+.DS_Store
+.env
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+build/
+
+# Licensed source media, derived voices, models, caches, and long logs never enter Git.
+projects/*
+!projects/.gitkeep
+asset-library/*
+!asset-library/README.md
+models/
+cache/
+logs/
+
+# Local licensed source packages. Keep only the directory marker public.
+resource/*
+!resource/.gitkeep
+
+# Local episode run configurations may contain dialogue and absolute paths.
+configs/*
+!configs/.gitkeep

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "drama-localisation-studio"
+version = "0.1.0"
+description = "Local-first, rights-gated multi-character drama localisation pipeline"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Drama Localisation Studio contributors" }]
+dependencies = []
+
+[project.scripts]
+castdub = "castdub.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/castdub"]

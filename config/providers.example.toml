@@ -1,0 +1,27 @@
+[separator]
+provider = "demucs"
+model = "htdemucs_ft"
+device = "cpu"
+two_stems = "vocals"
+
+[alignment]
+provider = "whisperx"
+mode = "subtitle-assisted"
+asr_model = "large-v3-turbo"
+source_language = "zh"
+device = "cpu"
+compute_type = "int8"
+
+[diarization]
+provider = "pyannote"
+model = "pyannote/speaker-diarization-community-1"
+device = "mps"
+
+[translation]
+provider = "manual"
+target_language = "en-US"
+
+[tts]
+provider = "qwen3-tts-mlx"
+model_path = "/path/to/approved/Qwen3-TTS-12Hz-1.7B-Base"
+device = "gpu"

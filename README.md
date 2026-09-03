@@ -96,6 +96,14 @@ PYTHONPATH=src python -m castdub start-episode \
   --source-video /private/source/EP01-clean.mp4
 ```
 
+Run the registered input check and persist the result:
+
+```bash
+PYTHONPATH=src python -m castdub preflight \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US
+```
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

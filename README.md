@@ -57,6 +57,26 @@ Inspect the machine without installing packages or downloading models:
 PYTHONPATH=src python -m castdub doctor
 ```
 
+Render a six-second, three-character synthetic delivery to verify the complete
+media path without a model or licensed input:
+
+```bash
+PYTHONPATH=src python -m castdub demo --output-dir /tmp/castdub-demo
+```
+
+Register an authorised episode as a resumable job:
+
+```bash
+PYTHONPATH=src python -m castdub start-episode \
+  --store /private/work/jobs.sqlite3 \
+  --series-id example-series \
+  --episode-id EP01 \
+  --target-language en-US \
+  --rights /private/work/rights.json \
+  --draft-root /private/source/EP01-draft \
+  --source-video /private/source/EP01-clean.mp4
+```
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

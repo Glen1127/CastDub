@@ -104,6 +104,15 @@ PYTHONPATH=src python -m castdub preflight \
   --job-id example-series:EP01:en-US
 ```
 
+Import the verified Draft into an editable timeline. The command stops at the
+mandatory character-approval gate and is safe to rerun:
+
+```bash
+PYTHONPATH=src python -m castdub import-episode \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US
+```
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

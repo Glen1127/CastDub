@@ -12,6 +12,7 @@ from castdub.jobs import create_episode_job, get_episode_job
 from castdub.pilot import run_pilot
 from castdub.preflight import preflight_registered_job
 from castdub.project import create_project, load_rights
+from castdub.runner import import_registered_draft
 from castdub.reverse import run_reverse
 
 
@@ -55,6 +56,12 @@ def build_parser() -> argparse.ArgumentParser:
     preflight_parser.add_argument("--store", type=Path, required=True)
     preflight_parser.add_argument("--job-id", required=True)
     preflight_parser.add_argument("--duration-tolerance-ms", type=int, default=1000)
+
+    job_import_parser = subparsers.add_parser(
+        "import-episode", help="Import a verified draft and stop for role approval"
+    )
+    job_import_parser.add_argument("--store", type=Path, required=True)
+    job_import_parser.add_argument("--job-id", required=True)
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -150,6 +157,14 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(report, ensure_ascii=False, separators=(",", ":")))
         if not report["ok"]:
             raise SystemExit(2)
+    elif args.command == "import-episode":
+        print(
+            json.dumps(
+                import_registered_draft(args.store, args.job_id),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
     elif args.command == "init-project":
         rights = load_rights(args.rights)
         project_dir = create_project(

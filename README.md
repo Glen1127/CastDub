@@ -137,6 +137,26 @@ PYTHONPATH=src python -m castdub approve-translation \
   --worklist /private/work/translation.approved.jsonl
 ```
 
+Prepare the stable-character voice selection separately from line-level
+performance references:
+
+```bash
+PYTHONPATH=src python -m castdub prepare-voices \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --library-root /private/work/asset-library
+```
+
+Approve either the existing stable profile or one explicit episode reference
+for every character:
+
+```bash
+PYTHONPATH=src python -m castdub approve-voices \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --approval /private/work/voice-profiles.approved.json
+```
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

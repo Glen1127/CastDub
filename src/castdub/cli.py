@@ -15,6 +15,7 @@ from castdub.project import create_project, load_rights
 from castdub.runner import import_registered_draft
 from castdub.roles import approve_role_mapping
 from castdub.translations import approve_translation_worklist
+from castdub.voices import approve_voice_profiles, prepare_voice_profile_approval
 from castdub.reverse import run_reverse
 
 
@@ -78,6 +79,20 @@ def build_parser() -> argparse.ArgumentParser:
     translation_parser.add_argument("--store", type=Path, required=True)
     translation_parser.add_argument("--job-id", required=True)
     translation_parser.add_argument("--worklist", type=Path, required=True)
+
+    voice_parser = subparsers.add_parser(
+        "prepare-voices", help="Build the character voice-profile approval queue"
+    )
+    voice_parser.add_argument("--store", type=Path, required=True)
+    voice_parser.add_argument("--job-id", required=True)
+    voice_parser.add_argument("--library-root", type=Path, required=True)
+
+    voice_approval_parser = subparsers.add_parser(
+        "approve-voices", help="Approve stable character voices without cross-role reuse"
+    )
+    voice_approval_parser.add_argument("--store", type=Path, required=True)
+    voice_approval_parser.add_argument("--job-id", required=True)
+    voice_approval_parser.add_argument("--approval", type=Path, required=True)
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -195,6 +210,24 @@ def main(argv: list[str] | None = None) -> None:
                 approve_translation_worklist(
                     args.store, args.job_id, args.worklist
                 ),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "prepare-voices":
+        print(
+            json.dumps(
+                prepare_voice_profile_approval(
+                    args.store, args.job_id, args.library_root
+                ),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "approve-voices":
+        print(
+            json.dumps(
+                approve_voice_profiles(args.store, args.job_id, args.approval),
                 ensure_ascii=False,
                 separators=(",", ":"),
             )

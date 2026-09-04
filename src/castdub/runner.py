@@ -5,17 +5,13 @@ from pathlib import Path
 from typing import Any
 
 from castdub.jianying import import_draft
-from castdub.jobs import JobStateError, advance_episode_job, get_episode_job
-
-
-def episode_work_dir(store_path: Path, job: dict[str, Any]) -> Path:
-    return (
-        store_path.expanduser().resolve().parent
-        / "artifacts"
-        / job["series_id"]
-        / job["episode_id"]
-        / job["target_language"]
-    )
+from castdub.jobs import (
+    JobStateError,
+    advance_episode_job,
+    episode_work_dir,
+    get_episode_job,
+)
+from castdub.roles import create_role_mapping_template
 
 
 def import_registered_draft(store_path: Path, job_id: str) -> dict[str, Any]:
@@ -48,6 +44,13 @@ def import_registered_draft(store_path: Path, job_id: str) -> dict[str, Any]:
         output_dir=output_dir,
         source_video=source_video,
     )
+    role_mapping_path = work_dir / "approvals" / "role-mapping.template.json"
+    role_template = create_role_mapping_template(
+        output_dir / "dialogue-plan.jsonl",
+        Path(job["rights_path"]),
+        job_id,
+        role_mapping_path,
+    )
     advance_episode_job(
         store_path,
         job_id,
@@ -74,5 +77,7 @@ def import_registered_draft(store_path: Path, job_id: str) -> dict[str, Any]:
         "import_report": str(report_path),
         "timeline": str(output_dir / "timeline.jsonl"),
         "dialogue_plan": str(output_dir / "dialogue-plan.jsonl"),
+        "role_mapping_template": str(role_mapping_path),
+        "role_assignment_count": len(role_template["assignments"]),
         "spoken_dialogue_segment_count": report["spoken_dialogue_segment_count"],
     }

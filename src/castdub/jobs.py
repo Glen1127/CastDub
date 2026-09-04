@@ -168,6 +168,16 @@ def get_episode_job(store_path: Path, job_id: str) -> dict[str, Any]:
     return dict(row)
 
 
+def episode_work_dir(store_path: Path, job: dict[str, Any]) -> Path:
+    return (
+        store_path.expanduser().resolve().parent
+        / "artifacts"
+        / job["series_id"]
+        / job["episode_id"]
+        / job["target_language"]
+    )
+
+
 def advance_episode_job(
     store_path: Path,
     job_id: str,

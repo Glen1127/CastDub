@@ -113,6 +113,19 @@ PYTHONPATH=src python -m castdub import-episode \
   --job-id example-series:EP01:en-US
 ```
 
+Edit the generated `role-mapping.template.json`, set every
+`approved_character_id`, and set `approved` to `true`. Then run:
+
+```bash
+PYTHONPATH=src python -m castdub approve-roles \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --mapping /private/work/role-mapping.approved.json
+```
+
+The command accepts only characters covered by the rights manifest and creates
+the translation/performance worklist for the next approval stage.
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

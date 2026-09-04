@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://castdub.local/schemas/translation-entry.schema.json",
+  "title": "Approved translation and performance entry",
+  "type": "object",
+  "required": [
+    "utterance_id",
+    "character_id",
+    "start_ms",
+    "end_ms",
+    "target_duration_ms",
+    "source_text",
+    "approved_target_text",
+    "performance_reference_path",
+    "status"
+  ],
+  "properties": {
+    "utterance_id": { "type": "string", "minLength": 1 },
+    "character_id": { "type": "string", "minLength": 1 },
+    "start_ms": { "type": "integer", "minimum": 0 },
+    "end_ms": { "type": "integer", "minimum": 1 },
+    "target_duration_ms": { "type": "integer", "minimum": 1 },
+    "source_text": { "type": "string", "minLength": 1 },
+    "draft_target_text": { "type": "string" },
+    "approved_target_text": { "type": "string", "minLength": 1 },
+    "emotion": { "type": ["string", "null"] },
+    "emotion_intensity": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "speaking_rate": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+    "pause_boundaries_ms": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "breath_boundaries_ms": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "performance_reference_path": { "type": "string", "minLength": 1 },
+    "status": { "const": "approved" }
+  }
+}

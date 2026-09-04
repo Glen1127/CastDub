@@ -126,6 +126,17 @@ PYTHONPATH=src python -m castdub approve-roles \
 The command accepts only characters covered by the rights manifest and creates
 the translation/performance worklist for the next approval stage.
 
+After editing every `approved_target_text` and marking every row `approved`,
+lock the translation while preserving role, timing, source text, and reference
+audio:
+
+```bash
+PYTHONPATH=src python -m castdub approve-translation \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --worklist /private/work/translation.approved.jsonl
+```
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

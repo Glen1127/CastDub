@@ -14,6 +14,7 @@ from castdub.preflight import preflight_registered_job
 from castdub.project import create_project, load_rights
 from castdub.runner import import_registered_draft
 from castdub.roles import approve_role_mapping
+from castdub.translations import approve_translation_worklist
 from castdub.reverse import run_reverse
 
 
@@ -70,6 +71,13 @@ def build_parser() -> argparse.ArgumentParser:
     role_parser.add_argument("--store", type=Path, required=True)
     role_parser.add_argument("--job-id", required=True)
     role_parser.add_argument("--mapping", type=Path, required=True)
+
+    translation_parser = subparsers.add_parser(
+        "approve-translation", help="Validate and lock the target-language worklist"
+    )
+    translation_parser.add_argument("--store", type=Path, required=True)
+    translation_parser.add_argument("--job-id", required=True)
+    translation_parser.add_argument("--worklist", type=Path, required=True)
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -177,6 +185,16 @@ def main(argv: list[str] | None = None) -> None:
         print(
             json.dumps(
                 approve_role_mapping(args.store, args.job_id, args.mapping),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "approve-translation":
+        print(
+            json.dumps(
+                approve_translation_worklist(
+                    args.store, args.job_id, args.worklist
+                ),
                 ensure_ascii=False,
                 separators=(",", ":"),
             )

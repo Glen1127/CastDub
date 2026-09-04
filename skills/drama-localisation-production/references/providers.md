@@ -15,6 +15,22 @@ Do not infer support from tokenizer coverage, an `auto` language option, or a su
 
 Use Qwen3-TTS through MLX-Audio on Apple Silicon when the installed checkpoint lists the target language and voice-cloning mode. Keep one persistent profile per character and add episode performance references per selected line.
 
+Treat identity and performance as separate inputs:
+
+- `stable_voice_reference` is approved once per recurring character and cannot
+  be replaced automatically by a later episode.
+- `performance_reference` is chosen per utterance from the matching source role
+  and may transfer emotion, pause and breath behaviour without changing identity.
+- An optional local performance analyser may propose emotion and vocal-event
+  metadata. Its output is evidence for synthesis and QC, not permission to swap
+  voices or rewrite dialogue.
+
+The first recommended analyser is SenseVoiceSmall in an isolated FunASR/PyTorch
+worker. It enriches WhisperX timing with emotion and vocal-event labels. It must
+load a pinned local path, never download during an episode run, and preserve raw
+provider output plus the normalized descriptor for audit. Install it only after
+the dependency/model approval gate in `docs/installation-plan.md`.
+
 If the target language is unsupported, stop before full synthesis. Present candidate providers with model/checkpoint name, purpose, download size, peak memory estimate, hardware support, account/login requirement, licence, and privacy implications. Install only after approval.
 
 CosyVoice or another provider may be added behind the same utterance contract; it must not silently change character identity, timing policy, or provenance fields.

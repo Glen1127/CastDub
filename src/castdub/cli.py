@@ -13,6 +13,7 @@ from castdub.jobs import create_episode_job, get_episode_job
 from castdub.mixing import prepare_mix_approval, render_episode_mix
 from castdub.pilot import run_pilot
 from castdub.preflight import preflight_registered_job
+from castdub.qc import complete_episode, run_delivery_qc
 from castdub.performance import (
     SenseVoiceSubprocessProvider,
     analyse_episode_performance,
@@ -146,6 +147,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     delivery_parser.add_argument("--store", type=Path, required=True)
     delivery_parser.add_argument("--job-id", required=True)
+
+    qc_parser = subparsers.add_parser(
+        "run-qc", help="Validate rights, audio, subtitles, and final render"
+    )
+    qc_parser.add_argument("--store", type=Path, required=True)
+    qc_parser.add_argument("--job-id", required=True)
+    qc_parser.add_argument("--duration-tolerance-ms", type=int, default=120)
+
+    complete_parser = subparsers.add_parser(
+        "complete-episode", help="Mark a successfully checked episode complete"
+    )
+    complete_parser.add_argument("--store", type=Path, required=True)
+    complete_parser.add_argument("--job-id", required=True)
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -325,6 +339,21 @@ def main(argv: list[str] | None = None) -> None:
         print(
             json.dumps(
                 render_delivery(args.store, args.job_id),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "run-qc":
+        result = run_delivery_qc(
+            args.store, args.job_id, args.duration_tolerance_ms
+        )
+        print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+        if not result["ok"]:
+            raise SystemExit(2)
+    elif args.command == "complete-episode":
+        print(
+            json.dumps(
+                complete_episode(args.store, args.job_id),
                 ensure_ascii=False,
                 separators=(",", ":"),
             )

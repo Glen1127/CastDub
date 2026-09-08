@@ -92,7 +92,13 @@ def _create_job(root: Path, output_mode: str) -> tuple[Path, dict[str, object]]:
     _tone(dialogue, 2000)
     _tone(full_mix, 2000)
     (mix_dir / "manifest.json").write_text(
-        json.dumps({"dialogue_only": str(dialogue), "full_mix": str(full_mix)})
+        json.dumps(
+            {
+                "duration_ms": 2000,
+                "dialogue_only": str(dialogue),
+                "full_mix": str(full_mix),
+            }
+        )
     )
     return store, job
 

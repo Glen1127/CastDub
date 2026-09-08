@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 from castdub.jobs import advance_episode_job, create_episode_job, episode_work_dir
-from castdub.performance import analyse_episode_performance
+from castdub.performance import SenseVoiceSubprocessProvider, analyse_episode_performance
 
 
 class FakeProvider:
@@ -95,6 +96,18 @@ def _create_job(root: Path) -> tuple[Path, dict[str, object]]:
 
 
 class PerformanceAnalysisTests(unittest.TestCase):
+    def test_preserves_virtual_environment_python_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            worker_python = root / "venv-python"
+            worker_python.symlink_to(sys.executable)
+            model = root / "model"
+            model.mkdir()
+            provider = SenseVoiceSubprocessProvider(
+                worker_python, model, "test-revision"
+            )
+            self.assertEqual(provider.worker_python, worker_python.absolute())
+
     @patch("castdub.performance.subprocess.run")
     def test_writes_traceable_results_and_resumes(self, run: object) -> None:
         with tempfile.TemporaryDirectory() as directory:

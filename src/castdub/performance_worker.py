@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import re
 import sys
@@ -51,23 +52,24 @@ def main(argv: list[str] | None = None) -> None:
     if not isinstance(references, list):
         raise ValueError("Worker input must be a JSON list")
 
-    from funasr import AutoModel
-
-    model = AutoModel(
-        model=str(args.model_path.resolve()),
-        device="mps",
-        disable_update=True,
-    )
     output: list[dict[str, Any]] = []
-    for reference in references:
-        response = model.generate(
-            input=str(Path(reference).resolve()),
-            language="auto",
-            use_itn=False,
-            batch_size=1,
+    with contextlib.redirect_stdout(sys.stderr):
+        from funasr import AutoModel
+
+        model = AutoModel(
+            model=str(args.model_path.resolve()),
+            device="mps",
+            disable_update=True,
         )
-        raw = str(response[0].get("text", "")) if response else ""
-        output.append(_normalize(raw))
+        for reference in references:
+            response = model.generate(
+                input=str(Path(reference).resolve()),
+                language="auto",
+                use_itn=False,
+                batch_size=1,
+            )
+            raw = str(response[0].get("text", "")) if response else ""
+            output.append(_normalize(raw))
     json.dump(output, sys.stdout, ensure_ascii=False)
 
 

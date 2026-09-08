@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
 from castdub.jobs import advance_episode_job, create_episode_job, episode_work_dir
-from castdub.synthesis import synthesize_episode
+from castdub.synthesis import QwenMlxSubprocessProvider, synthesize_episode
 
 
 class FakeTTS:
@@ -104,6 +105,18 @@ def _create_job(root: Path) -> tuple[Path, dict[str, object]]:
 
 
 class SynthesisTests(unittest.TestCase):
+    def test_preserves_virtual_environment_python_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            worker_python = root / "venv-python"
+            worker_python.symlink_to(sys.executable)
+            model = root / "model"
+            model.mkdir()
+            provider = QwenMlxSubprocessProvider(
+                worker_python, model, "test-revision"
+            )
+            self.assertEqual(provider.worker_python, worker_python.absolute())
+
     @patch("castdub.synthesis._fit_duration")
     @patch("castdub.synthesis._duration_ms", return_value=2100)
     def test_generates_fitted_takes_and_resumes(self, duration: object, fit: object) -> None:

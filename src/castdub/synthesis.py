@@ -275,7 +275,7 @@ class QwenMlxSubprocessProvider:
     def __init__(
         self, worker_python: Path, model_path: Path, model_revision: str
     ) -> None:
-        self.worker_python = worker_python.expanduser().resolve()
+        self.worker_python = worker_python.expanduser().absolute()
         self.model_path = model_path.expanduser().resolve()
         self.model_revision = model_revision.strip()
         if not self.worker_python.is_file():

@@ -18,6 +18,7 @@ from castdub.performance import (
 from castdub.project import create_project, load_rights
 from castdub.runner import import_registered_draft
 from castdub.roles import approve_role_mapping
+from castdub.synthesis import QwenMlxSubprocessProvider, synthesize_episode
 from castdub.translations import approve_translation_worklist
 from castdub.voices import approve_voice_profiles, prepare_voice_profile_approval
 from castdub.reverse import run_reverse
@@ -107,6 +108,15 @@ def build_parser() -> argparse.ArgumentParser:
     performance_parser.add_argument("--worker-python", type=Path, required=True)
     performance_parser.add_argument("--model-path", type=Path, required=True)
     performance_parser.add_argument("--model-revision", required=True)
+
+    synthesis_parser = subparsers.add_parser(
+        "synthesize", help="Generate and duration-fit approved target dialogue"
+    )
+    synthesis_parser.add_argument("--store", type=Path, required=True)
+    synthesis_parser.add_argument("--job-id", required=True)
+    synthesis_parser.add_argument("--worker-python", type=Path, required=True)
+    synthesis_parser.add_argument("--model-path", type=Path, required=True)
+    synthesis_parser.add_argument("--model-revision", required=True)
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -250,6 +260,14 @@ def main(argv: list[str] | None = None) -> None:
         provider = SenseVoiceSubprocessProvider(
             args.worker_python, args.model_path, args.model_revision
         )
+    elif args.command == "synthesize":
+        provider = QwenMlxSubprocessProvider(
+            args.worker_python, args.model_path, args.model_revision
+        )
+        result = synthesize_episode(args.store, args.job_id, provider)
+        print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+        if not result["ok"]:
+            raise SystemExit(2)
         print(
             json.dumps(
                 analyse_episode_performance(args.store, args.job_id, provider),

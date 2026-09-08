@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from castdub.demo import render_synthetic_demo
+from castdub.delivery import render_delivery
 from castdub.doctor import inspect_environment
 from castdub.jianying import import_draft
 from castdub.jianying_export import export_localized_draft
@@ -139,6 +140,12 @@ def build_parser() -> argparse.ArgumentParser:
     mix_parser.add_argument("--store", type=Path, required=True)
     mix_parser.add_argument("--job-id", required=True)
     mix_parser.add_argument("--approval", type=Path, required=True)
+
+    delivery_parser = subparsers.add_parser(
+        "render-delivery", help="Create subtitles, editor package, and optional final MP4"
+    )
+    delivery_parser.add_argument("--store", type=Path, required=True)
+    delivery_parser.add_argument("--job-id", required=True)
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -310,6 +317,14 @@ def main(argv: list[str] | None = None) -> None:
         print(
             json.dumps(
                 render_episode_mix(args.store, args.job_id, args.approval),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "render-delivery":
+        print(
+            json.dumps(
+                render_delivery(args.store, args.job_id),
                 ensure_ascii=False,
                 separators=(",", ":"),
             )

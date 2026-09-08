@@ -42,10 +42,12 @@ reference audio but is not the emotion classifier.
   timing; this model enriches the performance descriptor rather than replacing
   it.
 - Model download: 944 MB published repository size (936 MB main weight file).
-- Runtime dependencies: a separate Python environment with `torch>=2.12.1`,
-  `torchaudio>=2.11.0`, `funasr>=1.3.26`, `numpy<=1.26.4`, `modelscope`,
-  `huggingface` and `huggingface_hub`. UI/service-only packages in the upstream
-  requirements (`gradio`, `fastapi`) are not needed for the offline worker.
+- Upstream lists a broad environment including Torch, Torchaudio, FunASR,
+  ModelScope, Hugging Face, Gradio and FastAPI. The CastDub offline worker uses
+  the smaller tested boundary: `numpy==1.26.4`, `torch==2.14.0`,
+  `funasr==1.4.14`, and `huggingface_hub==1.30.0`. It does not import
+  Torchaudio, ModelScope, Gradio, FastAPI, or the Hugging Face umbrella package.
+  This also avoids coupling mismatched Torch/Torchaudio release lines.
 - Additional disk estimate: 2.5-4 GB including the model, Python environment,
   Torch and caches. Peak unified-memory estimate on the M4 Mac: 2-4 GB during
   short-line inference. These are planning estimates and must be measured by the

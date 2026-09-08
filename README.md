@@ -39,11 +39,12 @@ video + matching Chinese SRT
 
 ## Current status
 
-The repository contains a working CLI pilot, Jianying/Douyin draft import and
-export, rights gates, reusable character profiles, local Qwen3-TTS synthesis,
-duration fitting, subtitles, mixing, delivery packaging, and QC foundations.
-The next milestone turns those pieces into a resumable episode state machine and
-a non-technical local workbench.
+The repository contains a resumable, rights-gated CLI route through
+Jianying/Douyin import, character and translation approval, reusable character
+profiles, local performance analysis, Qwen3-TTS synthesis, duration fitting,
+take and background approval, mixing, subtitle reconstruction, delivery
+packaging, blocking QC, and job completion. The remaining product milestone is
+the non-technical local workbench plus real-provider release qualification.
 
 ## Local development
 
@@ -59,6 +60,19 @@ Inspect the machine without installing packages or downloading models:
 ```bash
 PYTHONPATH=src python -m castdub doctor
 ```
+
+If this machine cannot reach PyPI or Hugging Face, install the approved local
+performance worker manually when network access is available:
+
+```bash
+cd /path/to/drama-localisation-studio
+./scripts/install-performance-worker.sh --accept-model-license
+```
+
+The script creates only `.venv-performance`, downloads
+`FunAudioLLM/SenseVoiceSmall` into `models/SenseVoiceSmall`, pins the resolved
+model revision in `models/SenseVoiceSmall.receipt.json`, and writes the full log
+to `logs/install-sensevoice.log`. These paths are excluded from Git.
 
 Render a six-second, three-character synthetic delivery to verify the complete
 media path without a model or licensed input:

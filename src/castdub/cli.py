@@ -11,6 +11,7 @@ from castdub.jianying import import_draft
 from castdub.jianying_export import export_localized_draft
 from castdub.jobs import create_episode_job, get_episode_job
 from castdub.mixing import prepare_mix_approval, render_episode_mix
+from castdub.orchestrator import continue_episode
 from castdub.pilot import run_pilot
 from castdub.preflight import preflight_registered_job
 from castdub.qc import complete_episode, run_delivery_qc
@@ -160,6 +161,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     complete_parser.add_argument("--store", type=Path, required=True)
     complete_parser.add_argument("--job-id", required=True)
+
+    continue_parser = subparsers.add_parser(
+        "continue-episode", help="Resume safe stages and stop at the next human gate"
+    )
+    continue_parser.add_argument("--store", type=Path, required=True)
+    continue_parser.add_argument("--job-id", required=True)
+    continue_parser.add_argument("--library-root", type=Path)
+    continue_parser.add_argument("--performance-python", type=Path)
+    continue_parser.add_argument("--performance-model", type=Path)
+    continue_parser.add_argument("--performance-revision")
+    continue_parser.add_argument("--tts-python", type=Path)
+    continue_parser.add_argument("--tts-model", type=Path)
+    continue_parser.add_argument("--tts-revision")
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -354,6 +368,24 @@ def main(argv: list[str] | None = None) -> None:
         print(
             json.dumps(
                 complete_episode(args.store, args.job_id),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "continue-episode":
+        print(
+            json.dumps(
+                continue_episode(
+                    args.store,
+                    args.job_id,
+                    library_root=args.library_root,
+                    performance_python=args.performance_python,
+                    performance_model=args.performance_model,
+                    performance_revision=args.performance_revision,
+                    tts_python=args.tts_python,
+                    tts_model=args.tts_model,
+                    tts_revision=args.tts_revision,
+                ),
                 ensure_ascii=False,
                 separators=(",", ":"),
             )

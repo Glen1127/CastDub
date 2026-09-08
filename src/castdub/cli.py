@@ -9,6 +9,7 @@ from castdub.doctor import inspect_environment
 from castdub.jianying import import_draft
 from castdub.jianying_export import export_localized_draft
 from castdub.jobs import create_episode_job, get_episode_job
+from castdub.mixing import prepare_mix_approval, render_episode_mix
 from castdub.pilot import run_pilot
 from castdub.preflight import preflight_registered_job
 from castdub.performance import (
@@ -125,6 +126,19 @@ def build_parser() -> argparse.ArgumentParser:
     take_parser.add_argument("--store", type=Path, required=True)
     take_parser.add_argument("--job-id", required=True)
     take_parser.add_argument("--approval", type=Path, required=True)
+
+    prepare_mix_parser = subparsers.add_parser(
+        "prepare-mix", help="Create the background-track approval queue"
+    )
+    prepare_mix_parser.add_argument("--store", type=Path, required=True)
+    prepare_mix_parser.add_argument("--job-id", required=True)
+
+    mix_parser = subparsers.add_parser(
+        "render-mix", help="Render dialogue-only and approved full-mix masters"
+    )
+    mix_parser.add_argument("--store", type=Path, required=True)
+    mix_parser.add_argument("--job-id", required=True)
+    mix_parser.add_argument("--approval", type=Path, required=True)
 
     init_parser = subparsers.add_parser(
         "init-project", help="Create a private, rights-gated localisation job"
@@ -280,6 +294,22 @@ def main(argv: list[str] | None = None) -> None:
         print(
             json.dumps(
                 approve_synthesized_takes(args.store, args.job_id, args.approval),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "prepare-mix":
+        print(
+            json.dumps(
+                prepare_mix_approval(args.store, args.job_id),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+    elif args.command == "render-mix":
+        print(
+            json.dumps(
+                render_episode_mix(args.store, args.job_id, args.approval),
                 ensure_ascii=False,
                 separators=(",", ":"),
             )

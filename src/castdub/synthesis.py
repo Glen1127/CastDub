@@ -148,6 +148,8 @@ def synthesize_episode(
                 "character_id": character_id,
                 "target_language": job["target_language"],
                 "target_text": row["approved_target_text"],
+                "start_ms": row["start_ms"],
+                "end_ms": row["end_ms"],
                 "target_duration_ms": row["target_duration_ms"],
                 "stable_voice_reference": str(stable_reference),
                 "performance_reference": str(performance_reference),

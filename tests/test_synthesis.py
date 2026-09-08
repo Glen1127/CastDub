@@ -88,6 +88,8 @@ def _create_job(root: Path) -> tuple[Path, dict[str, object]]:
             {
                 "utterance_id": "line-1",
                 "character_id": "lead",
+                "start_ms": 1000,
+                "end_ms": 3000,
                 "target_duration_ms": 2000,
                 "approved_target_text": "Hello.",
                 "source_text": "你好",

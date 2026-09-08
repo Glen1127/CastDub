@@ -157,6 +157,42 @@ PYTHONPATH=src python -m castdub approve-voices \
   --approval /private/work/voice-profiles.approved.json
 ```
 
+Analyse each approved source performance with an explicitly installed local
+worker and pinned local model revision. The command never downloads a model:
+
+```bash
+PYTHONPATH=src python -m castdub analyse-performance \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --worker-python /private/tools/studio-performance/bin/python \
+  --model-path /private/models/SenseVoiceSmall \
+  --model-revision APPROVED_REVISION
+```
+
+Generate target dialogue with the existing local Qwen3-TTS/MLX worker. Every
+request records its character, stable identity reference, same-character
+performance reference, text, target window, provider, and model revision:
+
+```bash
+PYTHONPATH=src python -m castdub synthesize \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --worker-python /private/tools/mlx-audio/bin/python \
+  --model-path /private/models/Qwen3-TTS-Base \
+  --model-revision APPROVED_REVISION
+```
+
+Takes that exceed the target window by more than 12% stop for text adaptation;
+they are not forcibly accelerated. After auditioning every generated take,
+approve the unchanged take set before mixing:
+
+```bash
+PYTHONPATH=src python -m castdub approve-takes \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --approval /private/work/takes.approved.json
+```
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

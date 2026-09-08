@@ -4,9 +4,22 @@ The application is intentionally split across process boundaries:
 
 1. **Studio core** owns jobs, rights, timelines, approvals, subtitles, mixing, and provenance.
 2. **Analysis worker** owns PyTorch, Demucs, WhisperX, and pyannote.
-3. **MLX TTS worker** owns MLX-Audio and Qwen3-TTS.
+3. **Performance worker** owns the optional FunASR/SenseVoice runtime for local
+   emotion and vocal-event evidence.
+4. **MLX TTS worker** owns MLX-Audio and Qwen3-TTS.
 
 Workers exchange small JSON job descriptions and filesystem artifact paths. Model objects and raw audio are never passed through the web application process. Each stage writes an immutable manifest so failed work can resume without re-running earlier stages.
+
+Identity and performance are separate controls. A character's approved stable
+reference is immutable during an episode. A per-line performance reference may
+be used only when it came from that same approved character. The Qwen3-TTS Base
+worker receives that source line and its transcript to carry delivery cues;
+the stable reference remains the identity anchor and QC comparison source.
+
+Duration fitting is deterministic. Shorter takes receive trailing silence;
+small overruns may use formant-preserving Rubber Band correction. An overrun
+above 12% stops at `performance_analysed` and requires text adaptation and
+regeneration before the job can reach `synthesis_completed`.
 
 The first release uses SQLite for structured state and JSON/CSV exports for interchange. It does not require Redis, Celery, containers, or a cloud service.
 

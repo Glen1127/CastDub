@@ -94,6 +94,7 @@ def synthesize_episode(
     work_dir = episode_work_dir(store_path, job)
     timeline_path = work_dir / "synthesis" / "takes.v1.jsonl"
     manifest_path = work_dir / "synthesis" / "manifest.json"
+    approval_template_path = work_dir / "approvals" / "takes.template.json"
     if job["status"] == "synthesis_completed" and timeline_path.is_file():
         rows = _read_jsonl(timeline_path)
         return {
@@ -104,6 +105,7 @@ def synthesize_episode(
             "utterance_count": len(rows),
             "takes": str(timeline_path),
             "manifest": str(manifest_path),
+            "approval_template": str(approval_template_path),
         }
     if job["status"] != "performance_analysed":
         raise JobStateError(
@@ -224,6 +226,28 @@ def synthesize_episode(
             "manifest": str(manifest_path),
         }
 
+    approval_template = {
+        "schema_version": 1,
+        "job_id": job_id,
+        "approved": False,
+        "takes": [
+            {
+                "utterance_id": row["utterance_id"],
+                "character_id": row["character_id"],
+                "target_text": row["target_text"],
+                "fitted_path": row["fitted_path"],
+                "decision": "pending",
+                "review_notes": "",
+            }
+            for row in take_rows
+        ],
+    }
+    approval_template_path.parent.mkdir(parents=True, exist_ok=True)
+    approval_template_path.write_text(
+        json.dumps(approval_template, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
     updated = advance_episode_job(
         store_path,
         job_id,
@@ -239,6 +263,7 @@ def synthesize_episode(
         "needs_text_adaptation": 0,
         "takes": str(timeline_path),
         "manifest": str(manifest_path),
+        "approval_template": str(approval_template_path),
     }
 
 

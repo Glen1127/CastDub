@@ -110,6 +110,7 @@ class SynthesisTests(unittest.TestCase):
             result = synthesize_episode(store, job["job_id"], FakeTTS(2100))
             self.assertTrue(result["ok"])
             self.assertEqual(result["status"], "synthesis_completed")
+            self.assertTrue(Path(result["approval_template"]).is_file())
             fit.assert_called_once()
             rows = [json.loads(line) for line in Path(result["takes"]).read_text().splitlines()]
             self.assertEqual(rows[0]["status"], "generated")

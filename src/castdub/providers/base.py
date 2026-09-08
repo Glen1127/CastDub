@@ -30,6 +30,7 @@ class PerformanceDescriptor:
     pause_boundaries_ms: tuple[int, ...]
     breath_boundaries_ms: tuple[int, ...]
     reference_audio: Path
+    vocal_events: tuple[str, ...] = ()
 
 
 class SeparatorProvider(Protocol):

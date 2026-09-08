@@ -20,6 +20,8 @@ LOCKED_FIELDS = (
     "target_duration_ms",
     "source_text",
     "performance_reference_path",
+    "performance_reference_start_ms",
+    "performance_reference_duration_ms",
 )
 
 

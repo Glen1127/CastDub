@@ -137,6 +137,10 @@ def approve_role_mapping(
             "pause_boundaries_ms": [],
             "breath_boundaries_ms": [],
             "performance_reference_path": row["reference_path"],
+            "performance_reference_start_ms": row.get("reference_start_ms", 0),
+            "performance_reference_duration_ms": row.get(
+                "reference_duration_ms", row["target_duration_ms"]
+            ),
             "status": "pending",
         }
         for row in approved_rows

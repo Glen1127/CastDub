@@ -13,7 +13,7 @@ from castdub.jobs import (
 )
 
 
-MAX_TEMPO_RATIO = 1.12
+MAX_TEMPO_RATIO = 1.16
 
 
 class BatchSynthesisProvider(Protocol):
@@ -160,11 +160,46 @@ def synthesize_episode(
             }
         )
 
-    raw_paths = provider.synthesize_many(requests)
-    if len(raw_paths) != len(requests):
-        raise JobStateError(
-            f"TTS provider returned {len(raw_paths)} takes for {len(requests)} utterances"
+    previous_rows = _read_jsonl(timeline_path) if timeline_path.is_file() else []
+    previous_by_id = {row["utterance_id"]: row for row in previous_rows}
+    generation_fields = (
+        "target_language",
+        "target_text",
+        "stable_voice_reference",
+        "performance_reference",
+        "reference_text",
+        "emotion",
+        "emotion_intensity",
+    )
+    raw_by_id: dict[str, Path] = {}
+    pending_requests: list[dict[str, Any]] = []
+    for request in requests:
+        previous = previous_by_id.get(request["utterance_id"])
+        previous_raw = Path(previous["raw_path"]) if previous else None
+        reusable = (
+            previous is not None
+            and previous.get("provider") == provider.name
+            and previous.get("model_revision") == provider.model_revision
+            and all(previous.get(field) == request.get(field) for field in generation_fields)
+            and previous_raw is not None
+            and previous_raw.is_file()
         )
+        if reusable:
+            raw_by_id[request["utterance_id"]] = previous_raw
+        else:
+            pending_requests.append(request)
+
+    generated_paths = (
+        provider.synthesize_many(pending_requests) if pending_requests else []
+    )
+    if len(generated_paths) != len(pending_requests):
+        raise JobStateError(
+            f"TTS provider returned {len(generated_paths)} takes for "
+            f"{len(pending_requests)} utterances"
+        )
+    for request, raw_path in zip(pending_requests, generated_paths):
+        raw_by_id[request["utterance_id"]] = raw_path
+    raw_paths = [raw_by_id[request["utterance_id"]] for request in requests]
 
     take_rows: list[dict[str, Any]] = []
     rejected = 0
@@ -209,6 +244,7 @@ def synthesize_episode(
         "utterances": len(take_rows),
         "accepted": len(take_rows) - rejected,
         "needs_text_adaptation": rejected,
+        "reused_raw_takes": len(requests) - len(pending_requests),
         "maximum_tempo_ratio": MAX_TEMPO_RATIO,
         "takes": str(timeline_path),
     }

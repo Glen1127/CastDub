@@ -18,6 +18,7 @@ asset-library/*
 models/
 cache/
 logs/
+work/
 
 # Local licensed source packages. Keep only the directory marker public.
 resource/*

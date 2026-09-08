@@ -13,6 +13,9 @@ from castdub.jobs import (
     get_episode_job,
 )
 
+MIN_REFERENCE_MS = 1000
+RECOMMENDED_REFERENCE_MS = 3000
+
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     return [
@@ -64,7 +67,7 @@ def prepare_voice_profile_approval(
                 row
                 for row in rows
                 if row["character_id"] == character_id
-                and 3000
+                and MIN_REFERENCE_MS
                 <= row.get("reference_duration_ms", row["target_duration_ms"])
                 <= 10000
             ),
@@ -99,6 +102,14 @@ def prepare_voice_profile_approval(
                         "source_start_ms": row.get("reference_start_ms", 0),
                         "source_duration_ms": row.get(
                             "reference_duration_ms", row["target_duration_ms"]
+                        ),
+                        "quality_warning": (
+                            "short_voice_reference"
+                            if row.get(
+                                "reference_duration_ms", row["target_duration_ms"]
+                            )
+                            < RECOMMENDED_REFERENCE_MS
+                            else None
                         ),
                     }
                     for row in candidates
@@ -229,6 +240,8 @@ def approve_voice_profiles(
             episode_reference = character_work / "reference.wav"
             _extract_reference(candidate, episode_reference)
             stable_reference = episode_reference
+            reference_duration_ms = candidate["source_duration_ms"]
+            quality_warning = candidate.get("quality_warning")
             character_library = (
                 library_root
                 / "series"
@@ -289,6 +302,14 @@ def approve_voice_profiles(
                     "character_id": character_id,
                     "stable_reference": str(stable_reference),
                     "selection_mode": mode,
+                    "reference_duration_ms": (
+                        reference_duration_ms
+                        if mode == "episode_reference"
+                        else None
+                    ),
+                    "quality_warning": (
+                        quality_warning if mode == "episode_reference" else None
+                    ),
                     "approved": True,
                 },
                 ensure_ascii=False,

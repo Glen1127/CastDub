@@ -17,8 +17,10 @@ class FakeTTS:
 
     def __init__(self, raw_duration_ms: int) -> None:
         self.raw_duration_ms = raw_duration_ms
+        self.calls: list[list[dict[str, object]]] = []
 
     def synthesize_many(self, requests: list[dict[str, object]]) -> list[Path]:
+        self.calls.append(requests)
         paths = []
         for request in requests:
             path = Path(str(request["output_path"]))
@@ -140,6 +142,20 @@ class SynthesisTests(unittest.TestCase):
             self.assertFalse(result["ok"])
             self.assertEqual(result["status"], "performance_analysed")
             self.assertEqual(result["needs_text_adaptation"], 1)
+
+    @patch("castdub.synthesis._duration_ms", return_value=2500)
+    def test_reuses_unchanged_raw_take_during_adaptation(self, duration: object) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store, job = _create_job(Path(directory))
+            provider = FakeTTS(2500)
+            self.assertFalse(synthesize_episode(store, job["job_id"], provider)["ok"])
+
+            result = synthesize_episode(store, job["job_id"], provider)
+
+            self.assertFalse(result["ok"])
+            self.assertEqual(len(provider.calls), 1)
+            manifest = json.loads(Path(result["manifest"]).read_text())
+            self.assertEqual(manifest["reused_raw_takes"], 1)
 
 
 if __name__ == "__main__":

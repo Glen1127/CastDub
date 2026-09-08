@@ -37,6 +37,54 @@ def write_rights(path: Path, character_ids: tuple[str, ...] = ("lead",)) -> None
 
 
 class VoicePreparationTests(unittest.TestCase):
+    def test_allows_short_same_character_reference_with_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rights = root / "rights.json"
+            draft = root / "draft"
+            video = root / "clean.mp4"
+            store = root / "jobs.sqlite3"
+            draft.mkdir()
+            video.touch()
+            write_rights(rights)
+            job = create_episode_job(
+                store, "series", "EP01", "en-US", rights, draft, video
+            )
+            for status in (
+                "inputs_verified",
+                "draft_imported",
+                "awaiting_role_approval",
+                "roles_approved",
+                "awaiting_translation_approval",
+                "translation_approved",
+            ):
+                advance_episode_job(store, job["job_id"], status)
+            work_dir = episode_work_dir(store, job)
+            plan = work_dir / "timeline" / "dialogue-plan.roles-approved.jsonl"
+            plan.parent.mkdir(parents=True)
+            plan.write_text(
+                json.dumps(
+                    {
+                        "segment_id": "short-line",
+                        "character_id": "lead",
+                        "target_duration_ms": 1400,
+                        "reference_text_zh": "你好",
+                        "reference_path": "/private/short.wav",
+                        "reference_start_ms": 0,
+                        "reference_duration_ms": 1800,
+                    }
+                )
+                + "\n"
+            )
+
+            result = prepare_voice_profile_approval(
+                store, job["job_id"], root / "library"
+            )
+            template = json.loads(Path(result["approval_template"]).read_text())
+            candidate = template["characters"][0]["episode_candidates"][0]
+            self.assertEqual(candidate["segment_id"], "short-line")
+            self.assertEqual(candidate["quality_warning"], "short_voice_reference")
+
     def test_suggests_existing_profile_without_approving_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

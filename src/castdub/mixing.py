@@ -124,7 +124,8 @@ def _render_dialogue(takes: list[dict[str, Any]], output: Path, duration_ms: int
         raise JobStateError("Cannot mix an episode with no approved dialogue")
     filters.append(
         f"{''.join(labels)}amix=inputs={len(labels)}:normalize=0:"
-        f"dropout_transition=0,apad,atrim=duration={duration_ms / 1000:.3f}[dialogue]"
+        f"dropout_transition=0,atrim=duration={duration_ms / 1000:.3f},"
+        f"apad=whole_dur={duration_ms / 1000:.3f}[dialogue]"
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     command.extend(
@@ -163,7 +164,8 @@ def _render_background(
                 "-i",
                 str(official_me),
                 "-af",
-                f"apad,atrim=duration={duration_ms / 1000:.3f}",
+                f"atrim=duration={duration_ms / 1000:.3f},"
+                f"apad=whole_dur={duration_ms / 1000:.3f}",
                 "-ar",
                 "48000",
                 "-ac",
@@ -198,7 +200,8 @@ def _render_background(
         raise JobStateError("Approve an official M&E track or at least one background segment")
     filters.append(
         f"{''.join(labels)}amix=inputs={len(labels)}:normalize=0:"
-        f"dropout_transition=0,apad,atrim=duration={duration_ms / 1000:.3f}[background]"
+        f"dropout_transition=0,atrim=duration={duration_ms / 1000:.3f},"
+        f"apad=whole_dur={duration_ms / 1000:.3f}[background]"
     )
     command.extend(
         (

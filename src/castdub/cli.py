@@ -317,6 +317,13 @@ def main(argv: list[str] | None = None) -> None:
         provider = SenseVoiceSubprocessProvider(
             args.worker_python, args.model_path, args.model_revision
         )
+        print(
+            json.dumps(
+                analyse_episode_performance(args.store, args.job_id, provider),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
     elif args.command == "synthesize":
         provider = QwenMlxSubprocessProvider(
             args.worker_python, args.model_path, args.model_revision
@@ -386,13 +393,6 @@ def main(argv: list[str] | None = None) -> None:
                     tts_model=args.tts_model,
                     tts_revision=args.tts_revision,
                 ),
-                ensure_ascii=False,
-                separators=(",", ":"),
-            )
-        )
-        print(
-            json.dumps(
-                analyse_episode_performance(args.store, args.job_id, provider),
                 ensure_ascii=False,
                 separators=(",", ":"),
             )

@@ -19,6 +19,7 @@ uv pip install --python "$PERFORMANCE_PYTHON" \
   'numpy==1.26.4' \
   'torch==2.14.0' \
   'funasr==1.4.14' \
+  'kaldi-native-fbank==1.22.3' \
   'huggingface_hub==1.30.0' >>"$INSTALL_LOG" 2>&1
 
 MODEL_REVISION=$(
@@ -45,6 +46,7 @@ if missing:
     raise SystemExit(f"Missing model files: {missing}")
 
 import funasr
+import kaldi_native_fbank
 import torch
 
 receipt.write_text(
@@ -55,6 +57,7 @@ receipt.write_text(
             "model_path": str(model_dir),
             "torch": torch.__version__,
             "funasr": getattr(funasr, "__version__", "unknown"),
+            "kaldi_native_fbank": kaldi_native_fbank.__version__,
             "model_bytes": (model_dir / "model.pt").stat().st_size,
         },
         indent=2,

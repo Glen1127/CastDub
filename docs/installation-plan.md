@@ -45,7 +45,9 @@ reference audio but is not the emotion classifier.
 - Upstream lists a broad environment including Torch, Torchaudio, FunASR,
   ModelScope, Hugging Face, Gradio and FastAPI. The CastDub offline worker uses
   the smaller tested boundary: `numpy==1.26.4`, `torch==2.14.0`,
-  `funasr==1.4.14`, and `huggingface_hub==1.30.0`. It does not import
+  `funasr==1.4.14`, `kaldi-native-fbank==1.22.3`, and
+  `huggingface_hub==1.30.0`. Kaldi Native FBank is the selected local feature
+  extraction backend. It does not import
   Torchaudio, ModelScope, Gradio, FastAPI, or the Hugging Face umbrella package.
   This also avoids coupling mismatched Torch/Torchaudio release lines.
 - Additional disk estimate: 2.5-4 GB including the model, Python environment,

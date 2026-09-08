@@ -193,6 +193,43 @@ PYTHONPATH=src python -m castdub approve-takes \
   --approval /private/work/takes.approved.json
 ```
 
+Review the generated `background.template.json`. Select only music, ambience,
+or effects confirmed not to contain source dialogue, or provide one approved
+official M&E track. Then render the dialogue-only and full-mix masters:
+
+```bash
+PYTHONPATH=src python -m castdub prepare-mix \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US
+
+PYTHONPATH=src python -m castdub render-mix \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US \
+  --approval /private/work/background.approved.json
+```
+
+Create the editor package and, in `final` mode, the burned-subtitle MP4 from
+the registered clean master. Target subtitles are generated from the approved
+spoken text, using bottom-centre `Alignment=2` and `MarginV=18`:
+
+```bash
+PYTHONPATH=src python -m castdub render-delivery \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US
+```
+
+Run blocking QC and mark the episode complete only after QC passes:
+
+```bash
+PYTHONPATH=src python -m castdub run-qc \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US
+
+PYTHONPATH=src python -m castdub complete-episode \
+  --store /private/work/jobs.sqlite3 \
+  --job-id example-series:EP01:en-US
+```
+
 Create an empty production job after preparing a rights JSON document:
 
 ```bash

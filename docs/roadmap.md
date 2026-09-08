@@ -13,6 +13,11 @@ outside the v0.1 acceptance gate.
 
 ## v0.1 milestones
 
+Current core status: every rights-gated production stage has a resumable CLI
+entry point through final QC and completion. Real provider installation,
+episode smoke testing, the convenience orchestrator, and the local workbench
+remain before the v0.1 release tag.
+
 ### 1. Safe, installable core
 
 - Protect licensed media, voices, model weights, generated work, and logs from
@@ -25,7 +30,8 @@ outside the v0.1 acceptance gate.
 ### 2. Resumable episode runner
 
 - Store job state and approvals in SQLite with immutable stage manifests.
-- Add `castdub run <episode> --target <language>` with stage-level resume.
+- Add `castdub run <episode> --target <language>` as a convenience orchestrator
+  over the implemented stage-level resume commands.
 - Split analysis, MLX TTS, and media work into process boundaries.
 - Cache analysis and synthesis by content fingerprint.
 - Write verbose logs to the episode directory.

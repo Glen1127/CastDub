@@ -14,7 +14,7 @@ MODEL_RECEIPT="$PROJECT_ROOT/models/SenseVoiceSmall.receipt.json"
 
 mkdir -p "$PROJECT_ROOT/logs" "$PROJECT_ROOT/models"
 
-uv venv "$PROJECT_ROOT/.venv-performance" --python 3.12 >>"$INSTALL_LOG" 2>&1
+uv venv "$PROJECT_ROOT/.venv-performance" --python 3.12 --allow-existing >>"$INSTALL_LOG" 2>&1
 uv pip install --python "$PERFORMANCE_PYTHON" \
   'numpy==1.26.4' \
   'torch==2.14.0' \

@@ -116,7 +116,7 @@ def _filter_path(path: Path) -> str:
 
 def _subtitle_play_resolution(source_video: Path | None) -> tuple[int, int]:
     if source_video is None:
-        return (1920, 1080)
+        return (384, 288)
     result = subprocess.run(
         [
             "ffprobe",
@@ -135,7 +135,10 @@ def _subtitle_play_resolution(source_video: Path | None) -> tuple[int, int]:
         check=True,
     )
     stream = json.loads(result.stdout)["streams"][0]
-    return (1920, 1080) if stream["width"] >= stream["height"] else (1080, 1920)
+    # EP01's approved style used libass' traditional reference canvas.  The
+    # canvas is part of the style: using the delivery resolution here makes the
+    # same Arial 20 definition render far smaller on HD/4K masters.
+    return (384, 288) if stream["width"] >= stream["height"] else (288, 384)
 
 
 def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
@@ -156,12 +159,13 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
         raise JobStateError("Cannot render delivery with no approved takes")
     editor_dir = work_dir / "deliverables" / "editor"
     source_video = Path(job["source_video"]) if job["source_video"] else None
+    subtitle_play_resolution = _subtitle_play_resolution(source_video)
     subtitle_paths = _write_subtitles(
         takes,
         editor_dir,
         job["episode_id"],
         job["target_language"],
-        _subtitle_play_resolution(source_video),
+        subtitle_play_resolution,
     )
     mix_manifest = json.loads(
         (work_dir / "mix" / "manifest.json").read_text(encoding="utf-8")
@@ -240,6 +244,10 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
             "margin_v": 18,
             "outline": 2,
             "shadow": 1,
+        },
+        "subtitle_play_resolution": {
+            "width": subtitle_play_resolution[0],
+            "height": subtitle_play_resolution[1],
         },
     }
     manifest_path.parent.mkdir(parents=True, exist_ok=True)

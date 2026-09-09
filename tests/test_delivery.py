@@ -115,7 +115,13 @@ class DeliveryTests(unittest.TestCase):
             self.assertIsNone(result["final_video"])
             self.assertIn("Actual spoken words.", Path(result["target_srt"]).read_text())
             self.assertIn("实际台词", Path(result["bilingual_srt"]).read_text())
+            self.assertEqual(
+                result["subtitle_play_resolution"],
+                {"width": 384, "height": 288},
+            )
             ass = Path(result["target_ass"]).read_text()
+            self.assertIn("PlayResX: 384", ass)
+            self.assertIn("PlayResY: 288", ass)
             self.assertIn("Arial,20", ass)
             self.assertIn(",2,24,24,18,1", ass)
 

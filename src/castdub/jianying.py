@@ -187,6 +187,46 @@ def _joined_text(cues: Iterable[SubtitleCue]) -> str:
     return " ".join(cue.text for cue in cues).strip()
 
 
+def _dialogue_fragments_for_cue(
+    cue: SubtitleCue,
+    dialogue_segments: list[AudioSegment],
+) -> list[AudioSegment]:
+    """Return every contiguous source fragment belonging to a subtitle cue.
+
+    Jianying may split one recorded line into adjacent timeline segments.  Choosing
+    only the segment with the largest overlap can therefore discard the beginning
+    of the performance and delay the localized take.
+    """
+    overlapping = [
+        item
+        for item in dialogue_segments
+        if _overlap_ms(
+            cue.start_ms,
+            cue.end_ms,
+            item.target_start_ms,
+            item.target_end_ms,
+        )
+    ]
+    if not overlapping:
+        return []
+    primary = max(
+        overlapping,
+        key=lambda item: _overlap_ms(
+            cue.start_ms,
+            cue.end_ms,
+            item.target_start_ms,
+            item.target_end_ms,
+        ),
+    )
+    related = [
+        item
+        for item in overlapping
+        if item.track_index == primary.track_index
+        and item.source_path == primary.source_path
+    ]
+    return sorted(related, key=lambda item: item.target_start_ms)
+
+
 def import_draft(
     draft_root: Path,
     output_dir: Path,
@@ -215,34 +255,44 @@ def import_draft(
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    timeline_rows: list[dict[str, Any]] = []
-    for index, cue in enumerate(zh_cues, start=1):
-        overlapping_en = [
-            item
-            for item in en_cues
-            if _overlaps(cue.start_ms, cue.end_ms, item.start_ms, item.end_ms)
-        ]
-        ranked_audio = sorted(
-            dialogue_segments,
+    candidate_fragments = {
+        cue.cue_id: _dialogue_fragments_for_cue(cue, dialogue_segments)
+        for cue in zh_cues
+    }
+    primary_by_cue = {
+        cue.cue_id: max(
+            candidate_fragments[cue.cue_id],
             key=lambda item: _overlap_ms(
                 cue.start_ms,
                 cue.end_ms,
                 item.target_start_ms,
                 item.target_end_ms,
             ),
-            reverse=True,
+            default=None,
         )
-        assigned_audio = (
-            [ranked_audio[0].segment_id]
-            if ranked_audio
-            and _overlap_ms(
-                cue.start_ms,
-                cue.end_ms,
-                ranked_audio[0].target_start_ms,
-                ranked_audio[0].target_end_ms,
-            )
-            else []
-        )
+        for cue in zh_cues
+    }
+    claimed_segment_ids = {
+        item.segment_id for item in primary_by_cue.values() if item is not None
+    }
+
+    timeline_rows: list[dict[str, Any]] = []
+    fragments_by_primary: dict[str, list[AudioSegment]] = {}
+    for index, cue in enumerate(zh_cues, start=1):
+        overlapping_en = [
+            item
+            for item in en_cues
+            if _overlaps(cue.start_ms, cue.end_ms, item.start_ms, item.end_ms)
+        ]
+        primary = primary_by_cue[cue.cue_id]
+        fragments = [
+            item
+            for item in candidate_fragments[cue.cue_id]
+            if item is primary or item.segment_id not in claimed_segment_ids
+        ]
+        assigned_audio = [primary.segment_id] if primary else []
+        if primary:
+            fragments_by_primary[primary.segment_id] = fragments
         timeline_rows.append(
             {
                 "cue_index": index,
@@ -273,6 +323,13 @@ def import_draft(
         rows = rows_by_segment.get(segment.segment_id, [])
         if not rows:
             continue
+        fragments = fragments_by_primary.get(segment.segment_id, [segment])
+        target_start_ms = min(item.target_start_ms for item in fragments)
+        target_end_ms = max(item.target_end_ms for item in fragments)
+        reference_start_ms = min(item.source_start_ms for item in fragments)
+        reference_end_ms = max(
+            item.source_start_ms + item.source_duration_ms for item in fragments
+        )
         overlapping_en = [
             cue
             for cue in en_cues
@@ -286,11 +343,11 @@ def import_draft(
         dialogue_plan.append(
             {
                 "segment_id": segment.segment_id,
-                "target_start_ms": segment.target_start_ms,
-                "target_duration_ms": segment.target_duration_ms,
+                "target_start_ms": target_start_ms,
+                "target_duration_ms": target_end_ms - target_start_ms,
                 "reference_path": segment.source_path,
-                "reference_start_ms": segment.source_start_ms,
-                "reference_duration_ms": segment.source_duration_ms,
+                "reference_start_ms": reference_start_ms,
+                "reference_duration_ms": reference_end_ms - reference_start_ms,
                 "reference_text_zh": " ".join(row["source_zh"] for row in rows),
                 "translation_en_draft": _joined_text(overlapping_en),
                 "cue_ids": [row["cue_id"] for row in rows],

@@ -269,6 +269,21 @@ def run_delivery_qc(
         }
         if style != expected_style:
             failures.append("burned-subtitle style differs from the approved safe area")
+        expected_resolution = {"width": 384, "height": 288}
+        if job.get("source_video"):
+            source_probe_for_style = _probe(Path(job["source_video"]))
+            source_style_stream = next(
+                stream
+                for stream in source_probe_for_style["streams"]
+                if stream["codec_type"] == "video"
+            )
+            expected_resolution = (
+                {"width": 384, "height": 288}
+                if source_style_stream["width"] >= source_style_stream["height"]
+                else {"width": 288, "height": 384}
+            )
+        if deliverables.get("subtitle_play_resolution") != expected_resolution:
+            failures.append("burned-subtitle reference canvas differs from EP01 style")
 
         if job["output_mode"] == "final":
             final_value = deliverables.get("final_video")

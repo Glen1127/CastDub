@@ -11,9 +11,26 @@ requires-python = ">=3.12,<3.14"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Drama Localisation Studio contributors" }]
 dependencies = []
+keywords = ["dubbing", "localisation", "voice-cloning", "jianying", "douyin"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Sound/Audio :: Speech",
+  "Topic :: Multimedia :: Video",
+]
 
 [project.scripts]
 castdub = "castdub.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/castdub"]
+
+[tool.hatch.build]
+exclude = [
+  "schemas/reverse-blueprint.schema.json",
+  "src/castdub/reverse/**",
+  "tests/test_reverse.py",
+]

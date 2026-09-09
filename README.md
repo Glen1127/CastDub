@@ -39,12 +39,32 @@ video + matching Chinese SRT
 
 ## Current status
 
-The repository contains a resumable, rights-gated CLI route through
+Version 0.1.0 contains a resumable, rights-gated CLI route through
 Jianying/Douyin import, character and translation approval, reusable character
 profiles, local performance analysis, Qwen3-TTS synthesis, duration fitting,
 take and background approval, mixing, subtitle reconstruction, delivery
-packaging, blocking QC, and job completion. The remaining product milestone is
-the non-technical local workbench plus real-provider release qualification.
+packaging, blocking QC, and job completion. The complete route has been
+qualified with a real multi-character episode on Apple Silicon. Licensed test
+media and generated voices are intentionally not distributed.
+
+The graphical workbench, automatic WhisperX/pyannote speaker discovery, and
+reverse-video blueprint experiments are future milestones, not v0.1.0 APIs.
+
+## Install the core
+
+Use Python 3.12 or 3.13. FFmpeg and FFprobe must be available on `PATH` for
+media rendering:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install drama_localisation_studio-0.1.0-py3-none-any.whl
+castdub --help
+castdub doctor
+```
+
+Model runtimes are optional workers and are never downloaded by installing the
+core package. Review `docs/installation-plan.md` before enabling them.
 
 ## Local development
 
@@ -80,21 +100,6 @@ media path without a model or licensed input:
 ```bash
 PYTHONPATH=src python -m castdub demo --output-dir /tmp/castdub-demo
 ```
-
-Reverse a finished episode into factual shot data, optional semantic analysis,
-an editor-neutral blueprint, and an independent Jianying project copy:
-
-```bash
-PYTHONPATH=src python -m castdub reverse resource/剧集/EP01.mp4 \
-  --output resource/剧集/EP01.reverse \
-  --jianying-template 'resource/剧集Project/EP01 '
-```
-
-The command never installs packages or downloads models. PySceneDetect is the
-preferred shot detector; FFmpeg supplies a deterministic fallback. OpenCV,
-Qwen3-VL through an OpenAI-compatible local endpoint, Demucs `htdemucs_ft`, and
-faster-whisper report `unavailable` until explicitly configured with installed
-code and local model paths. See `readiness.json` in the output directory.
 
 Register an authorised episode as a resumable job:
 

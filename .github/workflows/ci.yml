@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install FFmpeg and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade pip build
+      - name: Test source
+        run: python -m unittest discover -s tests -q
+        env:
+          PYTHONPATH: src
+      - name: Build distributions
+        run: python -m build
+      - name: Test installed wheel
+        run: |
+          python -m pip install --no-deps dist/*.whl
+          castdub --help
+          castdub doctor
+          castdub demo --output-dir "$RUNNER_TEMP/castdub-demo"
+      - name: Audit archives
+        run: python scripts/audit-release.py dist/*

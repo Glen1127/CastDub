@@ -26,7 +26,6 @@ from castdub.synthesis import QwenMlxSubprocessProvider, synthesize_episode
 from castdub.take_approval import approve_synthesized_takes
 from castdub.translations import approve_translation_worklist
 from castdub.voices import approve_voice_profiles, prepare_voice_profile_approval
-from castdub.reverse import run_reverse
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -208,17 +207,6 @@ def build_parser() -> argparse.ArgumentParser:
     export_parser.add_argument("--dialogue-wav", type=Path, required=True)
     export_parser.add_argument("--qc-report", type=Path, required=True)
 
-    reverse_parser = subparsers.add_parser(
-        "reverse", help="Reverse a finished video into an editable multimodal blueprint"
-    )
-    reverse_parser.add_argument("video", type=Path)
-    reverse_parser.add_argument("--output", type=Path, required=True)
-    reverse_parser.add_argument("--scene-threshold", type=float, default=27.0)
-    reverse_parser.add_argument("--vision-base-url")
-    reverse_parser.add_argument("--vision-model")
-    reverse_parser.add_argument("--demucs-model-repository", type=Path)
-    reverse_parser.add_argument("--whisper-model-path", type=Path)
-    reverse_parser.add_argument("--jianying-template", type=Path)
     return parser
 
 
@@ -429,17 +417,5 @@ def main(argv: list[str] | None = None) -> None:
             output_draft_root=args.output_draft,
             dialogue_wav=args.dialogue_wav,
             qc_report=args.qc_report,
-        )
-        print(json.dumps(report, ensure_ascii=False, indent=2))
-    elif args.command == "reverse":
-        report = run_reverse(
-            args.video,
-            args.output,
-            scene_threshold=args.scene_threshold,
-            vision_base_url=args.vision_base_url,
-            vision_model=args.vision_model,
-            demucs_model_repository=args.demucs_model_repository,
-            whisper_model_path=args.whisper_model_path,
-            jianying_template=args.jianying_template,
         )
         print(json.dumps(report, ensure_ascii=False, indent=2))

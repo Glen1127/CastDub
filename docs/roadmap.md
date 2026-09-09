@@ -14,9 +14,10 @@ outside the v0.1 acceptance gate.
 ## v0.1 milestones
 
 Current core status: every rights-gated production stage has a resumable CLI
-entry point through final QC and completion. Real provider installation,
-episode smoke testing, the convenience orchestrator, and the local workbench
-remain before the v0.1 release tag.
+entry point through final QC and completion. SenseVoice and Qwen3-TTS/MLX
+workers, the convenience orchestrator, and a real multi-character episode have
+been validated on Apple Silicon. The v0.1 release remains intentionally CLI
+first.
 
 ### 1. Safe, installable core
 
@@ -36,16 +37,16 @@ remain before the v0.1 release tag.
 - Cache analysis and synthesis by content fingerprint.
 - Write verbose logs to the episode directory.
 
-### 3. Provider completion
+### 3. Provider route
 
 - Jianying/Douyin draft adapter.
 - Official M&E preference and reviewed Demucs fallback.
-- WhisperX alignment and pyannote speaker clustering.
+- Draft-first timing and human-approved character mapping.
 - Human or configured translation provider.
 - Qwen3-TTS MLX provider; CosyVoice remains an optional fallback.
 - FFmpeg subtitle, dialogue, mix, and unchanged-picture render provider.
 
-### 4. Local workbench
+### 4. Local workbench (v0.2+)
 
 - Episode input pairing and preflight.
 - Character mapping and reference approval.
@@ -58,7 +59,15 @@ remain before the v0.1 release tag.
 - Synthetic fixtures and mock providers; no copyrighted production media.
 - Apple Silicon installation and upgrade documentation.
 - Third-party licence and model-gating review.
-- Reproducible release checks and signed version tag.
+- Reproducible release checks and a version tag.
+
+## Deferred after v0.1
+
+- A non-technical local workbench.
+- WhisperX alignment and pyannote speaker clustering for projects without a
+  sufficiently structured Draft.
+- Reverse-video blueprint generation.
+- Lip synchronisation and automated publishing.
 
 ## v0.1 acceptance
 

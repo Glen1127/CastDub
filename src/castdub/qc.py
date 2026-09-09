@@ -64,16 +64,74 @@ def _srt_texts(path: Path) -> list[list[str]]:
     return texts
 
 
+def _background_silences(path: Path, duration_ms: int) -> list[tuple[int, int]]:
+    result = subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-i",
+            str(path),
+            "-af",
+            "silencedetect=noise=-70dB:d=1",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    starts = [
+        round(float(value) * 1000)
+        for value in re.findall(r"silence_start: ([0-9.]+)", result.stderr)
+    ]
+    ends = [
+        round(float(value) * 1000)
+        for value in re.findall(r"silence_end: ([0-9.]+)", result.stderr)
+    ]
+    if len(starts) > len(ends):
+        ends.append(duration_ms)
+    return list(zip(starts, ends))
+
+
+def _unexpected_background_silences(
+    path: Path, candidates: list[dict[str, Any]], duration_ms: int
+) -> list[tuple[int, int]]:
+    beds = [
+        (
+            int(item["target_start_ms"]),
+            int(item["target_start_ms"]) + int(item["target_duration_ms"]),
+        )
+        for item in candidates
+        if item.get("include")
+        and item.get("background_kind") in {"music", "ambience"}
+        and int(item["target_duration_ms"]) >= 5000
+    ]
+    return [
+        (start, end)
+        for start, end in _background_silences(path, duration_ms)
+        if any(min(end, bed_end) - max(start, bed_start) >= 1000 for bed_start, bed_end in beds)
+    ]
+
+
 def run_delivery_qc(
-    store_path: Path, job_id: str, duration_tolerance_ms: int = 120
+    store_path: Path,
+    job_id: str,
+    duration_tolerance_ms: int = 120,
+    force: bool = False,
 ) -> dict[str, Any]:
     job = get_episode_job(store_path, job_id)
     work_dir = episode_work_dir(store_path, job)
     report_path = work_dir / "qc" / "qc-report.json"
-    if job["status"] == "qc_passed" and report_path.is_file():
+    if not force and job["status"] == "qc_passed" and report_path.is_file():
         report = json.loads(report_path.read_text(encoding="utf-8"))
         return {"cache_hit": True, "status": job["status"], **report}
-    if job["status"] != "render_completed":
+    allowed_statuses = (
+        {"render_completed", "qc_passed", "completed"}
+        if force
+        else {"render_completed"}
+    )
+    if job["status"] not in allowed_statuses:
         raise JobStateError(
             f"Cannot run QC for {job_id} from {job['status']}; expected render_completed"
         )
@@ -147,6 +205,59 @@ def run_delivery_qc(
             if abs(_duration_ms(probe) - expected_duration) > duration_tolerance_ms:
                 failures.append(f"{name} duration does not match the episode")
 
+        background_value = mix_manifest.get("background")
+        background_approval = work_dir / "approvals" / "background.v1.json"
+        if background_value and background_approval.is_file():
+            background = Path(background_value)
+            approval = json.loads(background_approval.read_text(encoding="utf-8"))
+            unexpected = _unexpected_background_silences(
+                background, approval.get("draft_candidates", []), expected_duration
+            )
+            if unexpected:
+                start, end = unexpected[0]
+                failures.append(
+                    f"background is unexpectedly silent during an approved bed "
+                    f"at {start / 1000:.3f}-{end / 1000:.3f}s"
+                )
+
+        ass_events = [
+            line
+            for line in required["target_ass"].read_text(encoding="utf-8").splitlines()
+            if line.startswith("Dialogue: ")
+        ]
+        if len(ass_events) != len(takes):
+            failures.append("ASS subtitle cue count does not match approved takes")
+        else:
+            for row, event in zip(takes, ass_events):
+                fields = event.split(",", 3)
+                if len(fields) < 3:
+                    failures.append("ASS subtitle event is malformed")
+                    break
+                expected_start, expected_end = (
+                    int(row["start_ms"]),
+                    int(row["start_ms"])
+                    + int(row.get("fitted_duration_ms") or row["target_duration_ms"]),
+                )
+                parsed = []
+                for value in fields[1:3]:
+                    match = re.fullmatch(r"(\d+):(\d{2}):(\d{2})\.(\d{2})", value)
+                    if not match:
+                        parsed = []
+                        break
+                    hours, minutes, seconds, centiseconds = map(int, match.groups())
+                    parsed.append(
+                        ((hours * 60 + minutes) * 60 + seconds) * 1000
+                        + centiseconds * 10
+                    )
+                if len(parsed) != 2 or any(
+                    abs(actual - expected) > 10
+                    for actual, expected in zip(parsed, (expected_start, expected_end))
+                ):
+                    failures.append(
+                        f"ASS subtitle timing mismatch in {row['utterance_id']}"
+                    )
+                    break
+
         style = deliverables.get("subtitle_style", {})
         expected_style = {
             "font": "Arial",
@@ -209,10 +320,14 @@ def run_delivery_qc(
     )
     if failures:
         return {"cache_hit": False, "status": job["status"], **report}
-    updated = advance_episode_job(
-        store_path, job_id, "qc_passed", {"qc_report": str(report_path)}
-    )
-    return {"cache_hit": False, "status": updated["status"], **report}
+    if job["status"] == "render_completed":
+        updated = advance_episode_job(
+            store_path, job_id, "qc_passed", {"qc_report": str(report_path)}
+        )
+        status = updated["status"]
+    else:
+        status = job["status"]
+    return {"cache_hit": False, "status": status, **report}
 
 
 def complete_episode(store_path: Path, job_id: str) -> dict[str, Any]:

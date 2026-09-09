@@ -36,7 +36,8 @@ def _vtt_time(milliseconds: int) -> str:
 def _ass_time(milliseconds: int) -> str:
     hours, remainder = divmod(milliseconds, 3_600_000)
     minutes, remainder = divmod(remainder, 60_000)
-    seconds, centiseconds = divmod(remainder, 10)
+    seconds, remainder = divmod(remainder, 1000)
+    centiseconds = remainder // 10
     return f"{hours}:{minutes:02d}:{seconds:02d}.{centiseconds:02d}"
 
 
@@ -47,7 +48,11 @@ def _bounds(row: dict[str, Any]) -> tuple[int, int]:
 
 
 def _write_subtitles(
-    takes: list[dict[str, Any]], output_dir: Path, episode: str, language: str
+    takes: list[dict[str, Any]],
+    output_dir: Path,
+    episode: str,
+    language: str,
+    play_resolution: tuple[int, int] = (1920, 1080),
 ) -> dict[str, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     target_srt = output_dir / f"{episode}.{language}.srt"
@@ -61,8 +66,8 @@ def _write_subtitles(
     ass_lines = [
         "[Script Info]",
         "ScriptType: v4.00+",
-        "PlayResX: 1080",
-        "PlayResY: 1920",
+        f"PlayResX: {play_resolution[0]}",
+        f"PlayResY: {play_resolution[1]}",
         "WrapStyle: 0",
         "ScaledBorderAndShadow: yes",
         "",
@@ -109,6 +114,30 @@ def _filter_path(path: Path) -> str:
     return str(path).replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
 
 
+def _subtitle_play_resolution(source_video: Path | None) -> tuple[int, int]:
+    if source_video is None:
+        return (1920, 1080)
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width,height",
+            "-of",
+            "json",
+            str(source_video),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    stream = json.loads(result.stdout)["streams"][0]
+    return (1920, 1080) if stream["width"] >= stream["height"] else (1080, 1920)
+
+
 def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
     job = get_episode_job(store_path, job_id)
     work_dir = episode_work_dir(store_path, job)
@@ -126,8 +155,13 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
     if not takes:
         raise JobStateError("Cannot render delivery with no approved takes")
     editor_dir = work_dir / "deliverables" / "editor"
+    source_video = Path(job["source_video"]) if job["source_video"] else None
     subtitle_paths = _write_subtitles(
-        takes, editor_dir, job["episode_id"], job["target_language"]
+        takes,
+        editor_dir,
+        job["episode_id"],
+        job["target_language"],
+        _subtitle_play_resolution(source_video),
     )
     mix_manifest = json.loads(
         (work_dir / "mix" / "manifest.json").read_text(encoding="utf-8")
@@ -148,8 +182,7 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
 
     final_video: Path | None = None
     if job["output_mode"] == "final":
-        source_video = Path(job["source_video"])
-        if not source_video.is_file():
+        if source_video is None or not source_video.is_file():
             raise JobStateError(f"Clean no-subtitle master is missing: {source_video}")
         final_dir = work_dir / "deliverables" / "final"
         final_dir.mkdir(parents=True, exist_ok=True)

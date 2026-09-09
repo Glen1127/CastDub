@@ -155,6 +155,9 @@ def build_parser() -> argparse.ArgumentParser:
     qc_parser.add_argument("--store", type=Path, required=True)
     qc_parser.add_argument("--job-id", required=True)
     qc_parser.add_argument("--duration-tolerance-ms", type=int, default=120)
+    qc_parser.add_argument(
+        "--force", action="store_true", help="Revalidate downstream artifacts"
+    )
 
     complete_parser = subparsers.add_parser(
         "complete-episode", help="Mark a successfully checked episode complete"
@@ -366,7 +369,7 @@ def main(argv: list[str] | None = None) -> None:
         )
     elif args.command == "run-qc":
         result = run_delivery_qc(
-            args.store, args.job_id, args.duration_tolerance_ms
+            args.store, args.job_id, args.duration_tolerance_ms, args.force
         )
         print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
         if not result["ok"]:

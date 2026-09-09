@@ -118,13 +118,17 @@ def _render_dialogue(takes: list[dict[str, Any]], output: Path, duration_ms: int
         command.extend(("-i", str(fitted)))
         label = f"d{index}"
         start = int(take["start_ms"])
-        filters.append(f"[{index}:a]adelay={start}|{start}[{label}]")
+        filters.append(
+            f"[{index}:a]adelay={start}|{start},"
+            f"apad=whole_dur={duration_ms / 1000:.3f}[{label}]"
+        )
         labels.append(f"[{label}]")
     if not labels:
         raise JobStateError("Cannot mix an episode with no approved dialogue")
     filters.append(
         f"{''.join(labels)}amix=inputs={len(labels)}:normalize=0:"
-        f"dropout_transition=0,atrim=duration={duration_ms / 1000:.3f},"
+        f"dropout_transition=0,asetpts=N/SR/TB,"
+        f"atrim=duration={duration_ms / 1000:.3f},"
         f"apad=whole_dur={duration_ms / 1000:.3f}[dialogue]"
     )
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -192,7 +196,8 @@ def _render_background(
             f"asetpts=PTS-STARTPTS,atempo={float(segment['speed']):.6f},"
             f"atrim=duration={segment['target_duration_ms'] / 1000:.3f},"
             f"volume={float(segment['volume']):.6f},"
-            f"adelay={int(segment['target_start_ms'])}|{int(segment['target_start_ms'])}"
+            f"adelay={int(segment['target_start_ms'])}|{int(segment['target_start_ms'])},"
+            f"apad=whole_dur={duration_ms / 1000:.3f}"
             f"[{label}]"
         )
         labels.append(f"[{label}]")
@@ -200,7 +205,8 @@ def _render_background(
         raise JobStateError("Approve an official M&E track or at least one background segment")
     filters.append(
         f"{''.join(labels)}amix=inputs={len(labels)}:normalize=0:"
-        f"dropout_transition=0,atrim=duration={duration_ms / 1000:.3f},"
+        f"dropout_transition=0,asetpts=N/SR/TB,"
+        f"atrim=duration={duration_ms / 1000:.3f},"
         f"apad=whole_dur={duration_ms / 1000:.3f}[background]"
     )
     command.extend(

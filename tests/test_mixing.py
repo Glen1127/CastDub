@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import struct
+import subprocess
 import tempfile
 import unittest
 import wave
 from pathlib import Path
 
 from castdub.jobs import advance_episode_job, create_episode_job, episode_work_dir
-from castdub.mixing import prepare_mix_approval, render_episode_mix
+from castdub.mixing import _render_background, prepare_mix_approval, render_episode_mix
 
 
 def _tone(path: Path, duration_ms: int, frequency: float) -> None:
@@ -113,6 +115,59 @@ def _create_job(root: Path) -> tuple[Path, dict[str, object], Path]:
 
 
 class MixingTests(unittest.TestCase):
+    def test_background_continues_after_first_short_compressed_input(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            short_wav = root / "short.wav"
+            long_wav = root / "long.wav"
+            short_mp3 = root / "short.mp3"
+            long_mp3 = root / "long.mp3"
+            output = root / "background.wav"
+            _tone(short_wav, 500, 440)
+            _tone(long_wav, 3000, 220)
+            for source, target in ((short_wav, short_mp3), (long_wav, long_mp3)):
+                subprocess.run(
+                    [
+                        "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                        "-i", str(source), str(target),
+                    ],
+                    check=True,
+                )
+            segments = [
+                {
+                    "source_path": str(short_mp3),
+                    "source_start_ms": 0,
+                    "source_duration_ms": 500,
+                    "target_start_ms": 167,
+                    "target_duration_ms": 500,
+                    "speed": 1.0,
+                    "volume": 1.0,
+                },
+                {
+                    "source_path": str(long_mp3),
+                    "source_start_ms": 0,
+                    "source_duration_ms": 3000,
+                    "target_start_ms": 0,
+                    "target_duration_ms": 3000,
+                    "speed": 1.0,
+                    "volume": 1.0,
+                },
+            ]
+
+            _render_background(None, segments, output, 3000)
+            probe = subprocess.run(
+                [
+                    "ffmpeg", "-hide_banner", "-ss", "2", "-t", "0.5",
+                    "-i", str(output), "-af", "volumedetect", "-f", "null", "-",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            match = re.search(r"mean_volume: ([-.0-9]+) dB", probe.stderr)
+            self.assertIsNotNone(match)
+            self.assertGreater(float(match.group(1)), -50)
+
     def test_requires_background_approval_and_renders_masters(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             store, job, background = _create_job(Path(directory))

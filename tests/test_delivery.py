@@ -9,7 +9,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from castdub.delivery import render_delivery
+from castdub.delivery import _ass_time, render_delivery
 from castdub.jobs import advance_episode_job, create_episode_job, episode_work_dir
 
 
@@ -104,6 +104,9 @@ def _create_job(root: Path, output_mode: str) -> tuple[Path, dict[str, object]]:
 
 
 class DeliveryTests(unittest.TestCase):
+    def test_ass_time_uses_seconds_and_centiseconds(self) -> None:
+        self.assertEqual(_ass_time(41_233), "0:00:41.23")
+
     def test_editor_package_uses_approved_spoken_text_and_bottom_style(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             store, job = _create_job(Path(directory), "editor")
@@ -121,6 +124,16 @@ class DeliveryTests(unittest.TestCase):
             store, job = _create_job(Path(directory), "final")
             result = render_delivery(store, job["job_id"])
             self.assertTrue(Path(result["final_video"]).is_file())
+            frame = subprocess.run(
+                [
+                    "ffmpeg", "-hide_banner", "-loglevel", "error", "-ss", "0.5",
+                    "-i", result["final_video"], "-frames:v", "1", "-f", "rawvideo",
+                    "-pix_fmt", "gray", "-",
+                ],
+                capture_output=True,
+                check=True,
+            ).stdout
+            self.assertGreater(max(frame), 100)
             self.assertTrue(render_delivery(store, job["job_id"])["cache_hit"])
 
 

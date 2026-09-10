@@ -66,6 +66,16 @@ castdub doctor
 Model runtimes are optional workers and are never downloaded by installing the
 core package. Review `docs/installation-plan.md` before enabling them.
 
+For source development:
+
+```bash
+git clone https://github.com/Glen1127/drama-localisation-studio.git
+cd drama-localisation-studio
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+```
+
 ## Local development
 
 The current skeleton uses only Python's standard library:

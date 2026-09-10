@@ -25,6 +25,11 @@ classifiers = [
 [project.scripts]
 castdub = "castdub.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/Glen1127/drama-localisation-studio"
+Repository = "https://github.com/Glen1127/drama-localisation-studio"
+Issues = "https://github.com/Glen1127/drama-localisation-studio/issues"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/castdub"]
 

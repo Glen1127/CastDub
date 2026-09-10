@@ -1,72 +1,82 @@
 # Drama Localisation Studio
 
-## Agent skill
+> 面向影视出海的本地优先、多角色 AI 配音生产线。基于剪映/抖音 Draft 与无字幕母版，生成稳定角色音色、情绪化目标语言对白、字幕、编辑交付包和完整成片。
 
-The reusable production workflow lives at
-[`skills/drama-localisation-production/SKILL.md`](skills/drama-localisation-production/SKILL.md).
-Copy that whole skill directory into a compatible agent's skills directory, or
-give its `SKILL.md` to an agent that supports filesystem and process tools.
+[![CI](https://github.com/Glen1127/drama-localisation-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/Glen1127/drama-localisation-studio/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Glen1127/drama-localisation-studio)](https://github.com/Glen1127/drama-localisation-studio/releases/latest)
+[![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-3776AB)](https://www.python.org/)
+[![License](https://img.shields.io/badge/Code-Apache--2.0-blue)](LICENSE)
 
-Local-first, open-source production tooling for authorised multi-character film
-and drama localisation: character-aware performance analysis, stable
-cross-language voice cloning, emotion/prosody transfer, automatic dubbing,
-duration fitting, soundtrack preservation, and subtitle reconstruction.
+[中文说明](#项目特点) · [English](#english)
 
-The first milestone converts a 3–5 minute Chinese scene with at least three speaking characters into an English dubbed video while preserving the original picture, music, ambience, and effects. Lip synchronisation is explicitly not a first-stage acceptance gate.
+## EP02 实际效果
 
-## Non-negotiable gates
+以下为同一画面、同一台词时段的对比。英文版保留原画面、配乐与音效，替换角色对白并重新生成与实际发音一致的英文字幕。
 
-- Translation, dubbing, voice cloning, and overseas distribution rights must be approved before processing.
-- Every cloned voice is bound to an explicitly authorised character profile.
-- Cross-character voice reuse is rejected unless separately authorised.
-- Source media, voice references, generated audio, model weights, and logs are never committed.
-- Final English subtitles are generated from the approved English script and aligned dubbed audio, never relabelled Chinese subtitles.
+<table>
+  <tr>
+    <th width="50%">中文原版</th>
+    <th width="50%">English dub</th>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/ep02-comparison-zh.jpg" alt="EP02 中文原版画面与中文字幕"></td>
+    <td><img src="docs/assets/ep02-comparison-en.jpg" alt="EP02 英文配音画面与英文字幕"></td>
+  </tr>
+</table>
 
-## Planned pipeline
+▶ **[观看 8 秒中英配音 A/B 对比](https://github.com/Glen1127/drama-localisation-studio/releases/download/v0.1.0/EP02.zh-en-US.comparison.mp4)**
+
+画面始终左右并排；前 4 秒播放中文原声，后 4 秒播放英文配音，方便直接比较声音、情绪、气口和时长。
+
+> EP02 截图与试听片段经权利人许可，仅用于展示本项目效果；不属于 Apache-2.0 授权范围，未经许可不得复用或再发布。
+
+## 项目特点
+
+- **多角色稳定音色**：每个角色绑定可跨集累积的声音档案，禁止未经确认跨角色复用。
+- **情绪与气口迁移**：稳定音色参考与逐句表演参考分离，保留原角色的情绪、节奏、停顿和呼吸感。
+- **按原时间线配音**：译文先做影视化改写，再逐句合成和时长闭环；不以粗暴加速代替台词适配。
+- **保留配乐与音效**：优先使用官方 M&E；否则对背景候选做人工审批后再混音，避免残留中文对白。
+- **字幕来自最终台词**：英文/其他语言字幕由批准后的目标语言台词与最终音频生成，绝不把中文字幕改标签冒充译文。
+- **双交付模式**：既输出供剪辑师替换的中间文件，也可输出已合成的完整国际化视频。
+- **可追溯与可续跑**：角色、译文、声音参考、模型版本、生成参数、审批记录和 QC 结果全部留档。
+- **本地优先**：核心状态机不联网、不自动下载模型；私有视频和声音资料默认留在本机。
+
+## 输入与输出
+
+最有效率的输入是：某一集的剪映/抖音 Draft 工程 + 对应无字幕原视频 + 权利证明。Draft 提供已经剪好的时间线和素材关系；无字幕母版用于高效、可靠地自动封装最终成片。
+
+| 类型 | 内容 |
+| --- | --- |
+| 必需输入 | Draft 工程、无字幕视频、目标语言、翻译/配音/声音复制/发行授权清单 |
+| 可选输入 | 原始 SRT、角色表、术语表、官方 M&E、已确认的跨集声音档案 |
+| 编辑交付 | 目标语言 SRT/VTT/ASS、对白独立音轨、含配乐音效的混音、可编辑台词—角色—时间线 |
+| 最终交付 | 目标语言 MP4、英文/双语字幕、角色声音档案、模型与参数记录、QC 报告 |
+
+## 工作流
 
 ```text
-video + matching Chinese SRT
-  -> inspect streams and prefer official M&E when available
-  -> Demucs fallback for dialogue/background separation
-  -> SRT-assisted WhisperX alignment + ASR discrepancy report
-  -> pyannote speaker clustering
-  -> human character mapping and voice-profile approval
-  -> scene-aware translation and duration-aware adaptation
-  -> per-character Qwen3-TTS synthesis
-  -> iterative duration fit and mix
-  -> English video, subtitles, editable timeline, voice profiles, QC report
+Draft + 无字幕母版 + 授权清单
+  → 导入并核对素材/时间线
+  → 识别对白、说话人、情绪和气口
+  → 人工批准角色映射与跨集声音档案
+  → 按场景翻译改写并批准目标台词
+  → 按角色克隆声音、逐句生成和时长适配
+  → 审批配音 take 与无中文对白的背景轨
+  → 混音、重建字幕、封装编辑包与成片
+  → 阻断式 QC 与可追溯报告
 ```
 
-## Current status
+首阶段验收重点是角色、声音、情绪、节奏、字幕和混音可信；口型同步不是 v0.1.0 的验收门槛。
 
-Version 0.1.0 contains a resumable, rights-gated CLI route through
-Jianying/Douyin import, character and translation approval, reusable character
-profiles, local performance analysis, Qwen3-TTS synthesis, duration fitting,
-take and background approval, mixing, subtitle reconstruction, delivery
-packaging, blocking QC, and job completion. The complete route has been
-qualified with a real multi-character episode on Apple Silicon. Licensed test
-media and generated voices are intentionally not distributed.
+## 当前版本
 
-The graphical workbench, automatic WhisperX/pyannote speaker discovery, and
-reverse-video blueprint experiments are future milestones, not v0.1.0 APIs.
+`v0.1.0` 已实现可续跑、带授权门禁的命令行流程：剪映/抖音 Draft 导入、角色与翻译审批、跨集声音档案、本地表演分析、Qwen3-TTS 合成、时长适配、take/背景审批、混音、字幕重建、双模式交付、阻断式 QC 和任务完成。
 
-## Install the core
+完整流程已在 Apple Silicon 上用真实多角色剧集验证。图形工作台，以及基于 WhisperX/pyannote 的全自动说话人发现，仍属于后续里程碑，不是 v0.1.0 已完成 API。
 
-Use Python 3.12 or 3.13. FFmpeg and FFprobe must be available on `PATH` for
-media rendering:
+## 快速开始
 
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install drama_localisation_studio-0.1.0-py3-none-any.whl
-castdub --help
-castdub doctor
-```
-
-Model runtimes are optional workers and are never downloaded by installing the
-core package. Review `docs/installation-plan.md` before enabling them.
-
-For source development:
+要求 Python 3.12 或 3.13，并确保 `ffmpeg`、`ffprobe` 位于 `PATH`。安装核心不会下载任何模型：
 
 ```bash
 git clone https://github.com/Glen1127/drama-localisation-studio.git
@@ -74,9 +84,30 @@ cd drama-localisation-studio
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
+castdub doctor
+castdub demo --output-dir /tmp/castdub-demo
 ```
 
-## Local development
+模型、预计磁盘/内存、Hugging Face 登录和授权条件见 [`docs/installation-plan.md`](docs/installation-plan.md)。架构与生产目录分别见 [`docs/architecture.md`](docs/architecture.md) 和 [`docs/production-layout.md`](docs/production-layout.md)。
+
+## 授权与隐私门禁
+
+- 处理前必须确认翻译、配音、声音复制和海外发行权。
+- 每个克隆声音必须绑定明确获权的角色；跨角色复用需单独批准。
+- 源视频、声音参考、生成音频、模型权重和长日志不得提交到仓库。
+- 发布前必须经过角色、译文、声音、take、背景轨和 QC 审批。
+- 示例媒体与代码授权分离；代码使用 Apache-2.0，演示素材不自动获得开源许可。
+
+## Agent Skill
+
+可复用生产规范位于 [`skills/drama-localisation-production/SKILL.md`](skills/drama-localisation-production/SKILL.md)。复制整个 skill 目录即可交给支持文件系统和进程工具的 Codex 或其他 Agent 使用。
+
+## 完整 CLI 工作流
+
+<details>
+<summary>展开 v0.1.0 命令参考</summary>
+
+以下命令覆盖本地自检、模型 worker、剧集注册、各审批门禁、合成、混音、交付和 QC。
 
 The current skeleton uses only Python's standard library:
 
@@ -271,3 +302,35 @@ PYTHONPATH=src python -m castdub init-project \
 
 See `docs/installation-plan.md` before installing analysis or TTS dependencies.
 See `docs/roadmap.md` for the executable open-source milestones.
+
+</details>
+
+## English
+
+Drama Localisation Studio is a local-first, rights-gated production pipeline for
+multi-character screen localisation. It imports a matching Jianying/Douyin
+Draft and clean subtitle-free master, preserves each approved character's voice
+identity and source performance, adapts translated dialogue to the original
+timing, retains music and effects, reconstructs target-language subtitles, and
+delivers both editor-ready assets and a finished video.
+
+Version `0.1.0` provides the resumable CLI workflow and has been qualified on a
+real multi-character episode on Apple Silicon. The GUI and automatic
+WhisperX/pyannote speaker discovery remain future work. Lip sync is intentionally
+not a first-stage acceptance gate.
+
+Quick start:
+
+```bash
+git clone https://github.com/Glen1127/drama-localisation-studio.git
+cd drama-localisation-studio
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+castdub doctor
+castdub demo --output-dir /tmp/castdub-demo
+```
+
+Only process media and voices for which you hold translation, dubbing, voice
+cloning, and distribution rights. The EP02 demonstration media is shown with
+the rights holder's permission and is not licensed under Apache-2.0.

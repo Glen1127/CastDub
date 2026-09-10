@@ -13,3 +13,16 @@ Planned runtime providers include:
 - CosyVoice — Apache-2.0 code; optional provider whose selected model card must be reviewed before use.
 
 Exact versions, model revisions, checksums, and accepted terms must be written to each job's provenance report.
+
+## Demonstration media
+
+The following media is published with the rights holder's permission solely to
+demonstrate this project's output:
+
+- `docs/assets/ep02-comparison-zh.jpg`
+- `docs/assets/ep02-comparison-en.jpg`
+- the `EP02.zh-en-US.comparison.mp4` asset attached to the `v0.1.0` release
+
+This demonstration media is excluded from the repository's Apache-2.0 license.
+No permission to copy, redistribute, modify, train on, or otherwise reuse it is
+granted.

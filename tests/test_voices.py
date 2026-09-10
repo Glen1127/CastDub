@@ -131,7 +131,11 @@ class VoicePreparationTests(unittest.TestCase):
             selected.touch()
             (profile_dir / "profile.json").write_text(
                 json.dumps(
-                    {"character_id": "lead", "selected_reference": str(selected)}
+                    {
+                        "character_id": "lead",
+                        "selected_reference": str(selected),
+                        "selected_reference_text": "你好",
+                    }
                 )
             )
 
@@ -212,6 +216,7 @@ class VoicePreparationTests(unittest.TestCase):
                         {
                             "character_id": character_id,
                             "selected_reference": str(shared),
+                            "selected_reference_text": "你好",
                         }
                     )
                 )

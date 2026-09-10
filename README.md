@@ -67,8 +67,8 @@ Codex 会智能执行 Draft 解析、角色与跨集声音匹配、影视化翻�
 Draft + 无字幕母版 + 授权清单
   → 导入并核对素材/时间线
   → 识别对白、说话人、情绪和气口
-  → 人工批准角色映射与跨集声音档案
-  → 按场景翻译改写并批准目标台词
+  → 自动解析角色并复用跨集声音档案；歧义时才询问
+  → 按场景自动翻译改写并记录可追溯版本
   → 按角色克隆声音、逐句生成和时长适配
   → 审批配音 take 与无中文对白的背景轨
   → 混音、重建字幕、封装编辑包与成片
@@ -82,6 +82,23 @@ Draft + 无字幕母版 + 授权清单
 `CastDub — Codex Edition v1.0` 已实现可续跑、带授权门禁的智能生产流程：剪映/抖音 Draft 导入、自动角色映射、场景翻译改写、跨集声音档案、本地表演分析、Qwen3-TTS 合成、时长适配、take/背景检查、混音、字幕重建、双模式交付、阻断式 QC 和任务完成。
 
 完整流程已在 Apple Silicon 上用真实多角色剧集验证。图形工作台，以及基于 WhisperX/pyannote 的独立说话人发现，仍属于后续里程碑，不是 Codex Edition v1.0 已完成 API。
+
+## 安装前先确认
+
+当前 `v1.0` 只正式支持 **Apple Silicon Mac**，并且完整生产不是只安装 Python 包就能运行：
+
+| 必需项 | 用途 | 是否需要另外下载 |
+| --- | --- | --- |
+| Codex | 通过自然语言执行 CastDub Skill | 是，需要安装并登录 |
+| Python 3.12/3.13、`uv` | 核心程序与隔离 worker | 是 |
+| FFmpeg、FFprobe | 音轨、字幕、混音、视频封装 | 是 |
+| Qwen3-TTS 12Hz 1.7B Base + MLX-Audio | 多语言角色声音克隆 | **是，约 4.2 GB 模型；完整生产必需** |
+| SenseVoiceSmall | 情绪和声音事件分析 | **是，约 0.94 GB 模型；完整生产必需** |
+| CastDub Production Skill | 让 Codex 理解并执行完整流程 | 是，仓库内置，一条命令安装 |
+
+建议至少 16 GB 统一内存、预留 10 GB 模型和环境空间；24 GB 以上更适合正式生产。Demucs、WhisperX、pyannote、CosyVoice 在 Draft-first v1.0 中不是必装项。
+
+**完整安装步骤、模型许可、Hugging Face 登录条件、磁盘/内存估算及安装后路径：[`docs/installation-plan.md`](docs/installation-plan.md)。请先读该文件，不要只执行下面的核心安装。**
 
 ## 快速开始
 
@@ -98,9 +115,16 @@ castdub demo --output-dir /tmp/castdub-demo
 ./scripts/install-codex-skill.sh
 ```
 
+完整生产还必须安装两个本地 worker：
+
+```bash
+./scripts/install-tts-worker.sh --accept-model-license
+./scripts/install-performance-worker.sh --accept-model-license
+```
+
 重新打开 Codex 或开始一个新任务，然后直接用自然语言指定剧集和目标语言。大规模音视频处理由本地模型和工具完成；Skill 让 Codex 只读取紧凑的结构化生产信息并智能执行，因此无需把大型媒体装入上下文。
 
-模型、预计磁盘/内存、Hugging Face 登录和授权条件见 [`docs/installation-plan.md`](docs/installation-plan.md)。架构与生产目录分别见 [`docs/architecture.md`](docs/architecture.md) 和 [`docs/production-layout.md`](docs/production-layout.md)。
+架构与生产目录分别见 [`docs/architecture.md`](docs/architecture.md) 和 [`docs/production-layout.md`](docs/production-layout.md)。
 
 ## 授权与隐私门禁
 

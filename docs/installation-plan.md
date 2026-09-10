@@ -1,81 +1,123 @@
-# Installation plan
+# CastDub — Codex Edition installation
 
-No command in this document should be run until the user approves the dependency and model download list.
+This is the complete installation contract for `v1.0`. CastDub never downloads
+a model during an episode job. Run each model installer only after reviewing its
+licence and resource requirements.
 
-## Already available on the audited M4 Mac
+## Supported machine
 
-- Python 3.12 and uv.
-- FFmpeg 8 with libass, Rubber Band, VideoToolbox, AAC, and loudness filters.
-- Node 22, pnpm 10, and SQLite.
-- Working MLX/Metal runtime.
-- Working local Qwen3-TTS 1.7B Base weights at the configured provider path.
+- macOS on Apple Silicon; M4 is the qualified reference platform.
+- Python 3.12 or 3.13 for the core. Model workers use isolated Python 3.12 environments.
+- 16 GB unified memory minimum; 24 GB or more recommended for production.
+- Allow at least 10 GB for CastDub's two required model workers, plus private
+  source video, generated takes, caches, and deliverables.
+- Windows, Linux, Intel Mac, CUDA, and CPU-only execution are not qualified in v1.0.
 
-## Phase-one environments
+## Required components
 
-- `studio-core`: application, subtitles, media orchestration, mixing, and QC.
-- `studio-analysis`: pinned PyTorch, Demucs, WhisperX, and pyannote stack.
-- `studio-performance`: pinned PyTorch/FunASR worker for emotion and vocal-event
-  analysis. Keep this separate from the MLX environment so the two runtimes do
-  not force incompatible NumPy or Torch upgrades.
-- `studio-tts-mlx`: MLX-Audio 0.4.5, matching the locally verified runtime.
+| Component | Purpose | Download / disk | Peak memory estimate | Login | Terms |
+| --- | --- | ---: | ---: | --- | --- |
+| Codex | Natural-language execution of the bundled Skill | Installed separately | Account dependent | Codex sign-in | OpenAI product terms |
+| Python 3.12/3.13 + `uv` | Core and isolated workers | Under 1 GB before workers | Under 1 GB | No | PSF / MIT |
+| FFmpeg + FFprobe | Audio, subtitles, mixing and video | About 0.5 GB | Job dependent | No | Build-dependent open-source licences |
+| Qwen3-TTS 12Hz 1.7B Base | Required multilingual voice cloning | About 4.2 GB weights; allow 5–6 GB with environment | About 8–12 GB planning estimate | Public Hugging Face download normally needs no login | Apache-2.0 model card; operator must review |
+| SenseVoiceSmall | Required emotion and vocal-event analysis | 0.94 GB weights; allow 2.5–4 GB with environment | About 2–4 GB planning estimate | No login | Model terms must be reviewed; do not redistribute weights |
+| CastDub Production Skill | Gives Codex the episode workflow | Under 1 MB | Negligible | No additional login | Apache-2.0 repository code |
 
-## Phase-one model downloads
+The memory figures are conservative planning estimates, not guarantees. Media
+resolution, concurrency, reference length, and model revisions change actual use.
 
-- Demucs `htdemucs_ft`.
-- faster-whisper `large-v3-turbo`.
-- Chinese wav2vec2 forced-alignment model.
-- `pyannote/speaker-diarization-community-1` after local Hugging Face login and acceptance of its conditions.
+## 1. Install system tools
 
-Qwen3-TTS weights are reused by path and are not copied. CosyVoice is deferred until a pilot character fails the Qwen acceptance test.
+With Homebrew:
 
-## Performance-analysis addition awaiting approval
+```bash
+brew install python@3.12 ffmpeg uv
+```
 
-The next implementation stage needs a local analyser; Qwen3-TTS Base can consume
-reference audio but is not the emotion classifier.
+Verify that FFmpeg includes the subtitle and Rubber Band filters:
 
-### Recommended first provider
+```bash
+ffmpeg -filters | grep -E 'subtitles|rubberband'
+```
 
-- Model: `FunAudioLLM/SenseVoiceSmall`, fixed to an approved revision when
-  downloaded.
-- Purpose: per-line emotion labels plus vocal events such as laughter, crying,
-  coughing and speech/non-speech cues. WhisperX remains the source of word-level
-  timing; this model enriches the performance descriptor rather than replacing
-  it.
-- Model download: 944 MB published repository size (936 MB main weight file).
-- Upstream lists a broad environment including Torch, Torchaudio, FunASR,
-  ModelScope, Hugging Face, Gradio and FastAPI. The CastDub offline worker uses
-  the smaller tested boundary: `numpy==1.26.4`, `torch==2.14.0`,
-  `funasr==1.4.14`, `kaldi-native-fbank==1.22.3`, and
-  `huggingface_hub==1.30.0`. Kaldi Native FBank is the selected local feature
-  extraction backend. It does not import
-  Torchaudio, ModelScope, Gradio, FastAPI, or the Hugging Face umbrella package.
-  This also avoids coupling mismatched Torch/Torchaudio release lines.
-- Additional disk estimate: 2.5-4 GB including the model, Python environment,
-  Torch and caches. Peak unified-memory estimate on the M4 Mac: 2-4 GB during
-  short-line inference. These are planning estimates and must be measured by the
-  local smoke test.
-- Account/login: the public repository is readable without Hugging Face login.
-  The exact revision and checksums are recorded in provenance.
-- Licence: the code repository is MIT, while the Hugging Face weights are marked
-  `model-license`. Do not redistribute the weights or put them in release
-  artifacts; the operator must review and accept the model terms before local
-  download/use.
-- Privacy: audio stays on the local Mac. The worker must use an explicit local
-  model path after installation and must not silently fetch models during an
-  episode job.
+Install Codex using the current instructions at
+<https://developers.openai.com/codex/> and sign in before starting a CastDub task.
 
-### Deferred alternative
+## 2. Install CastDub core
 
-- Model: `emotion2vec/emotion2vec_plus_base`.
-- Purpose: specialised emotion embeddings/classification when SenseVoice labels
-  fail the pilot acceptance test.
-- Download: about 1.12 GB; published hardware estimate is about 4 GB memory.
-- Runtime: FunASR/PyTorch; licence is also marked `model-license` and requires
-  review. Do not install both providers for the first pilot.
+```bash
+git clone https://github.com/Glen1127/CastDub.git
+cd CastDub
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+castdub doctor
+castdub demo --output-dir /tmp/castdub-demo
+```
 
-### Approval boundary
+The core has no ML dependencies and performs no model download.
 
-Approval authorises only creation of `studio-performance`, installation of the
-listed runtime packages, and downloading the pinned SenseVoiceSmall files. It
-does not authorise the Demucs/WhisperX/pyannote downloads listed above, the
-CosyVoice fallback, cloud processing, or redistribution of any model weights.
+## 3. Install the Codex Skill
+
+```bash
+./scripts/install-codex-skill.sh
+```
+
+Start a new Codex task after installation. Example request:
+
+```text
+使用 CastDub，把 EP02 制作成英语国际化版本。
+```
+
+## 4. Install required local model workers
+
+Review the upstream terms first, then run:
+
+```bash
+./scripts/install-tts-worker.sh --accept-model-license
+./scripts/install-performance-worker.sh --accept-model-license
+```
+
+The first command creates `.venv-tts`, installs `mlx-audio==0.4.5`, downloads
+the pinned `Qwen/Qwen3-TTS-12Hz-1.7B-Base` revision to
+`models/Qwen3-TTS-12Hz-1.7B-Base`, and writes a receipt and log.
+
+The second creates `.venv-performance`, installs the pinned SenseVoice runtime,
+downloads `FunAudioLLM/SenseVoiceSmall` to `models/SenseVoiceSmall`, and writes
+its receipt and log.
+
+Expected final paths:
+
+```text
+.venv-tts/bin/python
+.venv-performance/bin/python
+models/Qwen3-TTS-12Hz-1.7B-Base/
+models/Qwen3-TTS-12Hz-1.7B-Base.receipt.json
+models/SenseVoiceSmall/
+models/SenseVoiceSmall.receipt.json
+```
+
+All environments, weights, receipts, private media, work products, and logs are
+excluded from Git. After the downloads complete, episode production can use
+explicit local paths without fetching weights at runtime.
+
+## Optional and deferred providers
+
+Demucs, WhisperX, pyannote, CosyVoice, and emotion2vec are **not required** for
+the Draft-first Codex Edition v1.0 route. Do not download them for the initial
+setup. They are reserved for missing-Draft/source-separation fallbacks or future
+provider support; pyannote models may require a Hugging Face login and gated
+licence acceptance.
+
+## Inputs still required per episode
+
+Installation does not supply media or rights. For each job provide:
+
+- a matching Jianying/Douyin Draft;
+- the matching subtitle-free source video for automatic final output;
+- a target BCP-47 language such as `en-US` or `es-ES`;
+- confirmed translation, dubbing, voice-cloning, and distribution rights.
+
+The Skill stops before model installation, voice reuse across characters, or
+publishing when the corresponding licence or rights decision is unresolved.

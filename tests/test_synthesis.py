@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from castdub.jobs import advance_episode_job, create_episode_job, episode_work_dir
 from castdub.synthesis import QwenMlxSubprocessProvider, synthesize_episode
+from castdub.synthesis_worker import _voice_identity_prompt
 
 
 class FakeTTS:
@@ -80,6 +81,7 @@ def _create_job(root: Path) -> tuple[Path, dict[str, object]]:
             {
                 "character_id": "lead",
                 "stable_reference": str(stable),
+                "stable_reference_text": "我是固定角色声音",
                 "approved": True,
             }
         )
@@ -132,7 +134,31 @@ class SynthesisTests(unittest.TestCase):
             rows = [json.loads(line) for line in Path(result["takes"]).read_text().splitlines()]
             self.assertEqual(rows[0]["status"], "generated")
             self.assertAlmostEqual(rows[0]["tempo_ratio"], 1.05)
+            request = rows[0]
+            self.assertEqual(request["stable_reference_text"], "我是固定角色声音")
             self.assertTrue(synthesize_episode(store, job["job_id"], FakeTTS(2100))["cache_hit"])
+
+    def test_worker_uses_stable_identity_reference_not_line_performance(self) -> None:
+        request = {
+            "stable_voice_reference": "/voices/lead.wav",
+            "stable_reference_text": "我是固定角色声音",
+            "performance_reference": "/performances/angry-line.wav",
+            "reference_text": "当句台词",
+        }
+
+        self.assertEqual(
+            _voice_identity_prompt(request),
+            ("/voices/lead.wav", "我是固定角色声音"),
+        )
+
+    def test_worker_rejects_missing_stable_identity_transcript(self) -> None:
+        with self.assertRaisesRegex(ValueError, "transcript"):
+            _voice_identity_prompt(
+                {
+                    "stable_voice_reference": "/voices/lead.wav",
+                    "stable_reference_text": None,
+                }
+            )
 
     @patch("castdub.synthesis._duration_ms", return_value=2500)
     def test_overlong_take_requires_text_adaptation_without_advancing(self, duration: object) -> None:

@@ -23,12 +23,26 @@ else
   "$python_bin" -m build
 fi
 
+release_stem="$($python_bin - <<'PY'
+import tomllib
+from pathlib import Path
+
+project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+stem = project["name"].replace("-", "_")
+version = project["version"]
+print(f"{stem}-{version}")
+PY
+)"
+wheel="dist/${release_stem}-py3-none-any.whl"
+sdist="dist/${release_stem}.tar.gz"
+[[ -f "$wheel" && -f "$sdist" ]]
+
 release_tmp="$(mktemp -d)"
 "$python_bin" -m venv "$release_tmp/venv"
-"$release_tmp/venv/bin/python" -m pip install --no-index --no-deps dist/*.whl
+"$release_tmp/venv/bin/python" -m pip install --no-index --no-deps "$wheel"
 "$release_tmp/venv/bin/castdub" --help >/dev/null
 "$release_tmp/venv/bin/castdub" doctor >/dev/null
 "$release_tmp/venv/bin/castdub" demo --output-dir "$release_tmp/demo" >/dev/null
-"$python_bin" scripts/audit-release.py dist/*.whl dist/*.tar.gz
+"$python_bin" scripts/audit-release.py "$wheel" "$sdist"
 
 echo "release check passed"

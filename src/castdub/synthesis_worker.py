@@ -21,6 +21,14 @@ LANGUAGE_CODES = {
 }
 
 
+def _voice_identity_prompt(request: dict[str, object]) -> tuple[str, str]:
+    reference = str(request.get("stable_voice_reference") or "").strip()
+    transcript = str(request.get("stable_reference_text") or "").strip()
+    if not reference or not transcript:
+        raise ValueError("Stable voice reference and its transcript are required")
+    return reference, transcript
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=Path, required=True)
@@ -38,6 +46,7 @@ def main(argv: list[str] | None = None) -> None:
         model = load_model(str(args.model_path.resolve()))
         outputs: list[str] = []
         for request in requests:
+            identity_audio, identity_text = _voice_identity_prompt(request)
             output_path = Path(request["output_path"]).resolve()
             output_path.parent.mkdir(parents=True, exist_ok=True)
             language = LANGUAGE_CODES.get(
@@ -48,8 +57,8 @@ def main(argv: list[str] | None = None) -> None:
                 for result in model.generate(
                     text=request["target_text"],
                     lang_code=language,
-                    ref_audio=request["performance_reference"],
-                    ref_text=request["reference_text"],
+                    ref_audio=identity_audio,
+                    ref_text=identity_text,
                     temperature=0.7,
                     top_p=0.9,
                     repetition_penalty=1.5,

@@ -136,6 +136,13 @@ def synthesize_episode(
                 "cannot share one stable voice reference"
             )
         stable_references[reference_key] = character_id
+        stable_reference_text = str(
+            profile.get("stable_reference_text") or ""
+        ).strip()
+        if not stable_reference_text:
+            raise JobStateError(
+                f"Stable voice reference transcript is missing for {character_id}"
+            )
         performance_reference = Path(row["performance_reference_path"]).resolve()
         if not performance_reference.is_file():
             raise JobStateError(
@@ -152,6 +159,7 @@ def synthesize_episode(
                 "end_ms": row["end_ms"],
                 "target_duration_ms": row["target_duration_ms"],
                 "stable_voice_reference": str(stable_reference),
+                "stable_reference_text": stable_reference_text,
                 "performance_reference": str(performance_reference),
                 "reference_text": row["source_text"],
                 "emotion": row.get("emotion"),
@@ -166,6 +174,7 @@ def synthesize_episode(
         "target_language",
         "target_text",
         "stable_voice_reference",
+        "stable_reference_text",
         "performance_reference",
         "reference_text",
         "emotion",

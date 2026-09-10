@@ -77,6 +77,9 @@ def prepare_voice_profile_approval(
         selected_reference_value = (
             existing_profile.get("selected_reference") if existing_profile else None
         )
+        selected_reference_text = (
+            existing_profile.get("selected_reference_text") if existing_profile else None
+        )
         selected_reference = None
         if selected_reference_value:
             selected_path = Path(selected_reference_value).expanduser()
@@ -93,6 +96,7 @@ def prepare_voice_profile_approval(
                 "character_id": character_id,
                 "existing_profile_path": str(profile_path) if existing_profile else None,
                 "existing_selected_reference": selected_reference,
+                "existing_selected_reference_text": selected_reference_text,
                 "episode_candidates": [
                     {
                         "segment_id": row["segment_id"],
@@ -213,9 +217,16 @@ def approve_voice_profiles(
             if not source["existing_profile_path"]:
                 raise JobStateError(f"No existing profile for {character_id}")
             stable_reference = Path(source["existing_selected_reference"])
+            stable_reference_text = str(
+                source.get("existing_selected_reference_text") or ""
+            ).strip()
             if not stable_reference.is_file():
                 raise JobStateError(
                     f"Selected voice reference is missing for {character_id}"
+                )
+            if not stable_reference_text:
+                raise JobStateError(
+                    f"Selected voice reference transcript is missing for {character_id}"
                 )
         elif mode == "episode_reference":
             if source["existing_profile_path"]:
@@ -233,6 +244,7 @@ def approve_voice_profiles(
                     f"Invalid episode voice reference for {character_id}: {segment_id!r}"
                 )
             candidate = candidates[segment_id]
+            stable_reference_text = candidate["source_text"]
             if not Path(candidate["source_path"]).is_file():
                 raise JobStateError(
                     f"Voice source is missing for {character_id}: {candidate['source_path']}"
@@ -268,6 +280,7 @@ def approve_voice_profiles(
                             "display_name": character_id,
                             "episodes_seen": [job["episode_id"]],
                             "selected_reference": str(selected),
+                            "selected_reference_text": stable_reference_text,
                             "selection_requires_approval": True,
                             "candidates": {
                                 job["episode_id"]: {
@@ -301,6 +314,7 @@ def approve_voice_profiles(
                     "job_id": job_id,
                     "character_id": character_id,
                     "stable_reference": str(stable_reference),
+                    "stable_reference_text": stable_reference_text,
                     "selection_mode": mode,
                     "reference_duration_ms": (
                         reference_duration_ms

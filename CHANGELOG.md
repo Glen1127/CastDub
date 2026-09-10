@@ -11,7 +11,17 @@ This project follows [Semantic Versioning](https://semver.org/).
   translation and duration adaptation, voice-reference selection, complete
   timeline repair, and low-token execution.
 - One-command local installation of the bundled Production Skill.
+- Explicit local Qwen3-TTS/MLX and SenseVoice worker installers, with model
+  licence gates, pinned runtimes, receipts, and full resource estimates.
 - Chinese-first GitHub landing page with an authorised EP02 A/B demonstration.
+
+### Fixed
+
+- Bound every Qwen3-TTS request to the character's approved stable voice audio
+  and matching transcript instead of replacing identity with a per-line
+  performance reference. This prevents same-character timbre drift.
+- Made the release check select the current version's wheel and source archive
+  when older build artifacts are also present in `dist/`.
 
 ### Compatibility
 

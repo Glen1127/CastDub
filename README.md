@@ -18,6 +18,24 @@
 
 Codex 会智能执行 Draft 解析、角色与跨集声音匹配、影视化翻译改写、本地声音克隆、情绪和时长适配、原声混音、字幕重建、QC 与最终成片合成。用户不需要回到剪辑软件逐条替换音频或字幕。
 
+## English
+
+CastDub — Codex Edition is a natural-language-driven, local-first production
+pipeline for multi-character screen localisation. Install its Production Skill
+in Codex, identify an episode and target language, and Codex intelligently runs
+the traceable local workflow from a matching Jianying/Douyin Draft and clean
+master to editor assets and a finished internationalised video.
+
+Version `v1.0` has run end to end on Apple Silicon Mac. Linux and Windows users
+can adapt the deployment to their own hardware and runtime. Codex is the
+required and fully tested agent environment for this edition; Claude Code and
+other agents can also drive CastDub after the Production Skill is adapted to
+their corresponding skill format.
+
+Only process media and voices for which you hold translation, dubbing, voice
+cloning, and distribution rights. Lip sync is intentionally not a first-stage
+acceptance gate.
+
 ## EP02 实际效果
 
 以下为同一画面、同一台词时段的对比。英文版保留原画面、配乐与音效，替换角色对白并重新生成与实际发音一致的英文字幕。
@@ -85,18 +103,18 @@ Draft + 无字幕母版 + 授权清单
 
 ## 安装前先确认
 
-当前 `v1.0` 只正式支持 **Apple Silicon Mac**，并且完整生产不是只安装 Python 包就能运行：
+当前 `v1.0` 已在 **Apple Silicon Mac 下完整跑通**；Linux 及 Windows 环境请根据本机硬件、Python/TTS 运行时和路径自行调整部署。完整生产需要以下组件：
 
 | 必需项 | 用途 | 是否需要另外下载 |
 | --- | --- | --- |
-| Codex | 通过自然语言执行 CastDub Skill | 是，需要安装并登录 |
+| Codex | 当前默认且完整验证的自然语言执行环境 | **是，需要安装并登录**；Claude Code 或其他 Agent 也可接入，但需按对应平台重构或适配 Skill |
 | Python 3.12/3.13、`uv` | 核心程序与隔离 worker | 是 |
 | FFmpeg、FFprobe | 音轨、字幕、混音、视频封装 | 是 |
 | Qwen3-TTS 12Hz 1.7B Base + MLX-Audio | 多语言角色声音克隆 | **是，约 4.2 GB 模型；完整生产必需** |
 | SenseVoiceSmall | 情绪和声音事件分析 | **是，约 0.94 GB 模型；完整生产必需** |
-| CastDub Production Skill | 让 Codex 理解并执行完整流程 | 是，仓库内置，一条命令安装 |
+| CastDub Production Skill | 让 Agent 理解并执行完整流程 | Codex 版本已内置，一条命令安装；其他 Agent 需转换为对应 Skill 格式 |
 
-建议至少 16 GB 统一内存、预留 10 GB 模型和环境空间；24 GB 以上更适合正式生产。Demucs、WhisperX、pyannote、CosyVoice 在 Draft-first v1.0 中不是必装项。
+建议至少 16 GB 统一内存、预留 10 GB 模型和环境空间；24 GB 以上更适合正式生产。
 
 **完整安装步骤、模型许可、Hugging Face 登录条件、磁盘/内存估算及安装后路径：[`docs/installation-plan.md`](docs/installation-plan.md)。请先读该文件，不要只执行下面的核心安装。**
 
@@ -346,32 +364,3 @@ See `docs/installation-plan.md` before installing analysis or TTS dependencies.
 See `docs/roadmap.md` for the executable open-source milestones.
 
 </details>
-
-## English
-
-CastDub — Codex Edition is a natural-language-driven, local-first production
-pipeline for multi-character screen localisation. Install its Production Skill
-in Codex, identify an episode and target language, and Codex intelligently runs
-the traceable local workflow from matching Jianying/Douyin Draft and clean
-master to editor assets and a finished internationalised video.
-
-Codex Edition `v1.0` has been qualified on real multi-character episodes on
-Apple Silicon. The GUI and standalone WhisperX/pyannote speaker discovery remain
-future work. Lip sync is intentionally not a first-stage acceptance gate.
-
-Quick start:
-
-```bash
-git clone https://github.com/Glen1127/CastDub.git
-cd CastDub
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
-castdub doctor
-castdub demo --output-dir /tmp/castdub-demo
-./scripts/install-codex-skill.sh
-```
-
-Only process media and voices for which you hold translation, dubbing, voice
-cloning, and distribution rights. The EP02 demonstration media is shown with
-the rights holder's permission and is not licensed under Apache-2.0.

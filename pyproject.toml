@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "drama-localisation-studio"
-version = "0.1.0"
+version = "1.0.0"
 description = "Local-first, rights-gated multi-character drama localisation pipeline"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 license = { text = "Apache-2.0" }
-authors = [{ name = "Drama Localisation Studio contributors" }]
+authors = [{ name = "CastDub contributors" }]
 dependencies = []
 keywords = ["dubbing", "localisation", "voice-cloning", "jianying", "douyin"]
 classifiers = [
@@ -26,9 +26,9 @@ classifiers = [
 castdub = "castdub.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Glen1127/drama-localisation-studio"
-Repository = "https://github.com/Glen1127/drama-localisation-studio"
-Issues = "https://github.com/Glen1127/drama-localisation-studio/issues"
+Homepage = "https://github.com/Glen1127/CastDub"
+Repository = "https://github.com/Glen1127/CastDub"
+Issues = "https://github.com/Glen1127/CastDub/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/castdub"]

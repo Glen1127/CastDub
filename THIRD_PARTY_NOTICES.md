@@ -21,7 +21,7 @@ demonstrate this project's output:
 
 - `docs/assets/ep02-comparison-zh.jpg`
 - `docs/assets/ep02-comparison-en.jpg`
-- the `EP02.zh-en-US.comparison.mp4` asset attached to the `v0.1.0` release
+- the `EP02.zh-en-US.comparison.mp4` asset attached to the `v1.0.0` release
 
 This demonstration media is excluded from the repository's Apache-2.0 license.
 No permission to copy, redistribute, modify, train on, or otherwise reuse it is

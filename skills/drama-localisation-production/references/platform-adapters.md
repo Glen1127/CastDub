@@ -6,7 +6,7 @@ Transfer the whole `drama-localisation-production/` directory. Keep `SKILL.md`, 
 
 ## Codex
 
-Install under `$CODEX_HOME/skills/drama-localisation-production/` or keep it in a project-visible skills directory. Invoke with `$drama-localisation-production` or allow implicit matching. `agents/openai.yaml` supplies Codex UI metadata.
+From the CastDub repository, run `./scripts/install-codex-skill.sh`. It installs under `${CODEX_HOME:-$HOME/.codex}/skills/drama-localisation-production/` without changing the repository copy. Start a new Codex task, invoke `$drama-localisation-production` or allow implicit matching, and describe the episode and target language in natural language. `agents/openai.yaml` supplies Codex UI metadata.
 
 ## Claude Code and compatible agents
 
@@ -43,8 +43,8 @@ All other state must be recoverable from manifests, the episode work directory, 
 ## Standard invocation prompt
 
 ```text
-Use $drama-localisation-production for EP02 in <project-root>, targeting es-ES.
-Audit the matching Jianying/Douyin draft and no-subtitle master first. Reuse the
-approved series voice library, stop for unresolved roles or unsupported language,
-preserve source assets, keep long logs on disk, and report only decisions and final paths.
+Use $drama-localisation-production to make EP02 in <project-root> an es-ES
+internationalised final video. Use the matching Jianying/Douyin draft and
+subtitle-free master, reuse the series voice library, preserve source assets,
+keep long logs on disk, and report only blockers and final paths.
 ```

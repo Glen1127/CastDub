@@ -1,13 +1,22 @@
-# Drama Localisation Studio
+# CastDub — Codex Edition
 
-> 面向影视出海的本地优先、多角色 AI 配音生产线。基于剪映/抖音 Draft 与无字幕母版，生成稳定角色音色、情绪化目标语言对白、字幕、编辑交付包和完整成片。
+> **将 CastDub Skill 放进 Codex，用一句自然语言，把影视素材自动制作成多语言国际化成片。**
 
-[![CI](https://github.com/Glen1127/drama-localisation-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/Glen1127/drama-localisation-studio/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Glen1127/drama-localisation-studio)](https://github.com/Glen1127/drama-localisation-studio/releases/latest)
+[![CI](https://github.com/Glen1127/CastDub/actions/workflows/ci.yml/badge.svg)](https://github.com/Glen1127/CastDub/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Glen1127/CastDub)](https://github.com/Glen1127/CastDub/releases/latest)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-3776AB)](https://www.python.org/)
 [![License](https://img.shields.io/badge/Code-Apache--2.0-blue)](LICENSE)
+[![Edition](https://img.shields.io/badge/Codex%20Edition-v1.0-111827)](https://github.com/Glen1127/CastDub/releases/tag/v1.0.0)
 
 [中文说明](#项目特点) · [English](#english)
+
+安装 CastDub 和 Production Skill 后，只需对 Codex 说：
+
+```text
+使用 CastDub，把 EP02 制作成英语国际化版本。
+```
+
+Codex 会智能执行 Draft 解析、角色与跨集声音匹配、影视化翻译改写、本地声音克隆、情绪和时长适配、原声混音、字幕重建、QC 与最终成片合成。用户不需要回到剪辑软件逐条替换音频或字幕。
 
 ## EP02 实际效果
 
@@ -24,7 +33,7 @@
   </tr>
 </table>
 
-▶ **[观看 8 秒中英配音 A/B 对比](https://github.com/Glen1127/drama-localisation-studio/releases/download/v0.1.0/EP02.zh-en-US.comparison.mp4)**
+▶ **[观看 8 秒中英配音 A/B 对比](https://github.com/Glen1127/CastDub/releases/download/v1.0.0/EP02.zh-en-US.comparison.mp4)**
 
 画面始终左右并排；前 4 秒播放中文原声，后 4 秒播放英文配音，方便直接比较声音、情绪、气口和时长。
 
@@ -66,27 +75,30 @@ Draft + 无字幕母版 + 授权清单
   → 阻断式 QC 与可追溯报告
 ```
 
-首阶段验收重点是角色、声音、情绪、节奏、字幕和混音可信；口型同步不是 v0.1.0 的验收门槛。
+首阶段验收重点是角色、声音、情绪、节奏、字幕和混音可信；口型同步不是 Codex Edition v1.0 的验收门槛。
 
 ## 当前版本
 
-`v0.1.0` 已实现可续跑、带授权门禁的命令行流程：剪映/抖音 Draft 导入、角色与翻译审批、跨集声音档案、本地表演分析、Qwen3-TTS 合成、时长适配、take/背景审批、混音、字幕重建、双模式交付、阻断式 QC 和任务完成。
+`CastDub — Codex Edition v1.0` 已实现可续跑、带授权门禁的智能生产流程：剪映/抖音 Draft 导入、自动角色映射、场景翻译改写、跨集声音档案、本地表演分析、Qwen3-TTS 合成、时长适配、take/背景检查、混音、字幕重建、双模式交付、阻断式 QC 和任务完成。
 
-完整流程已在 Apple Silicon 上用真实多角色剧集验证。图形工作台，以及基于 WhisperX/pyannote 的全自动说话人发现，仍属于后续里程碑，不是 v0.1.0 已完成 API。
+完整流程已在 Apple Silicon 上用真实多角色剧集验证。图形工作台，以及基于 WhisperX/pyannote 的独立说话人发现，仍属于后续里程碑，不是 Codex Edition v1.0 已完成 API。
 
 ## 快速开始
 
 要求 Python 3.12 或 3.13，并确保 `ffmpeg`、`ffprobe` 位于 `PATH`。安装核心不会下载任何模型：
 
 ```bash
-git clone https://github.com/Glen1127/drama-localisation-studio.git
-cd drama-localisation-studio
+git clone https://github.com/Glen1127/CastDub.git
+cd CastDub
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 castdub doctor
 castdub demo --output-dir /tmp/castdub-demo
+./scripts/install-codex-skill.sh
 ```
+
+重新打开 Codex 或开始一个新任务，然后直接用自然语言指定剧集和目标语言。大规模音视频处理由本地模型和工具完成；Skill 让 Codex 只读取紧凑的结构化生产信息并智能执行，因此无需把大型媒体装入上下文。
 
 模型、预计磁盘/内存、Hugging Face 登录和授权条件见 [`docs/installation-plan.md`](docs/installation-plan.md)。架构与生产目录分别见 [`docs/architecture.md`](docs/architecture.md) 和 [`docs/production-layout.md`](docs/production-layout.md)。
 
@@ -100,12 +112,12 @@ castdub demo --output-dir /tmp/castdub-demo
 
 ## Agent Skill
 
-可复用生产规范位于 [`skills/drama-localisation-production/SKILL.md`](skills/drama-localisation-production/SKILL.md)。复制整个 skill 目录即可交给支持文件系统和进程工具的 Codex 或其他 Agent 使用。
+Codex Edition 的核心生产规范位于 [`skills/drama-localisation-production/SKILL.md`](skills/drama-localisation-production/SKILL.md)。运行 `./scripts/install-codex-skill.sh` 即可安装到当前用户的 Codex Skills 目录；内部 Skill 名称为 `$drama-localisation-production`，为兼容现有流程暂不改名。
 
 ## 完整 CLI 工作流
 
 <details>
-<summary>展开 v0.1.0 命令参考</summary>
+<summary>展开 Codex Edition v1.0 命令参考</summary>
 
 以下命令覆盖本地自检、模型 worker、剧集注册、各审批门禁、合成、混音、交付和 QC。
 
@@ -126,7 +138,7 @@ If this machine cannot reach PyPI or Hugging Face, install the approved local
 performance worker manually when network access is available:
 
 ```bash
-cd /path/to/drama-localisation-studio
+cd /path/to/CastDub
 ./scripts/install-performance-worker.sh --accept-model-license
 ```
 
@@ -307,28 +319,27 @@ See `docs/roadmap.md` for the executable open-source milestones.
 
 ## English
 
-Drama Localisation Studio is a local-first, rights-gated production pipeline for
-multi-character screen localisation. It imports a matching Jianying/Douyin
-Draft and clean subtitle-free master, preserves each approved character's voice
-identity and source performance, adapts translated dialogue to the original
-timing, retains music and effects, reconstructs target-language subtitles, and
-delivers both editor-ready assets and a finished video.
+CastDub — Codex Edition is a natural-language-driven, local-first production
+pipeline for multi-character screen localisation. Install its Production Skill
+in Codex, identify an episode and target language, and Codex intelligently runs
+the traceable local workflow from matching Jianying/Douyin Draft and clean
+master to editor assets and a finished internationalised video.
 
-Version `0.1.0` provides the resumable CLI workflow and has been qualified on a
-real multi-character episode on Apple Silicon. The GUI and automatic
-WhisperX/pyannote speaker discovery remain future work. Lip sync is intentionally
-not a first-stage acceptance gate.
+Codex Edition `v1.0` has been qualified on real multi-character episodes on
+Apple Silicon. The GUI and standalone WhisperX/pyannote speaker discovery remain
+future work. Lip sync is intentionally not a first-stage acceptance gate.
 
 Quick start:
 
 ```bash
-git clone https://github.com/Glen1127/drama-localisation-studio.git
-cd drama-localisation-studio
+git clone https://github.com/Glen1127/CastDub.git
+cd CastDub
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 castdub doctor
 castdub demo --output-dir /tmp/castdub-demo
+./scripts/install-codex-skill.sh
 ```
 
 Only process media and voices for which you hold translation, dubbing, voice

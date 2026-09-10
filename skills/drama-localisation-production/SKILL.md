@@ -1,11 +1,11 @@
 ---
 name: drama-localisation-production
-description: Produces authorised multi-character drama localisation from a Jianying/Douyin draft, with an optional clean master for final video. Use for voice-cloned dubbing, mixing, subtitles, QC, and delivery.
+description: Use CastDub to turn an authorised Jianying/Douyin episode into a target-language editor package or finished video. Handles intelligent character mapping, scene translation, local voice-cloned dubbing, mixing, subtitles, QC, and delivery.
 ---
 
-# Drama Localisation Production
+# CastDub — Codex Edition
 
-Run one episode as a traceable production job. Treat the Jianying/Douyin draft as the structured source of dialogue, roles, timing, music, effects, and performance references. Require a no-subtitle picture master only when automatic final-video output is requested.
+Turn a natural-language request such as “把 EP02 制作成英语国际化版本” into one traceable production job. Treat the Jianying/Douyin draft as the structured source of dialogue, timing, music, effects, and performance references. Require a no-subtitle picture master only when automatic final-video output is requested.
 
 ## Hard gates
 
@@ -20,9 +20,19 @@ Run one episode as a traceable production job. Treat the Jianying/Douyin draft a
 ## Start every episode
 
 1. Read [references/input-contract.md](references/input-contract.md).
-2. Run `scripts/preflight_episode.py --project-root <root> --episode <EPnn> --output-mode <editor|final> --rights-confirmed`.
-3. Stop on missing inputs, duration mismatch, unresolved rights, missing media, or unsupported target language.
-4. Create a new episode work directory. Preserve source files byte-for-byte.
+2. Infer the episode, target language, and requested delivery from the user's request and unambiguous matching files. Do not ask the user to repeat information already present in filenames or job state.
+3. Run `scripts/preflight_episode.py --project-root <root> --episode <EPnn> --output-mode <editor|final> --rights-confirmed`.
+4. Reuse the existing job, analysis, voices, and generated takes when their provenance still matches; otherwise create a new episode work directory. Preserve source files byte-for-byte.
+5. Stop only on a hard gate, genuinely ambiguous inputs or characters, unsupported target language, or a failed blocking QC check that cannot be repaired safely.
+
+## Intelligent execution
+
+- Resolve characters automatically from Draft grouping, material references, dialogue context, picture clues, and the cumulative series voice library. Write the result to the normal approval artifact. Ask only about unresolved or conflicting identities.
+- Translate and adapt dialogue by scene. Preserve plot, relationships, names, tone, emotion, and the original speech window; revise wording and regenerate when a take does not fit naturally.
+- Select stable voice identity references and same-character performance references automatically. Never silently replace an already selected cross-episode profile.
+- Execute the complete route through synthesis, duration fitting, background reconstruction, subtitle rebuilding, delivery, and QC. Treat approval files as auditable state records, not automatic reasons to interrupt the user.
+- Diagnose and repair missing dialogue, delayed starts, incomplete background timelines, residual source subtitles, subtitle/text mismatch, and style drift across the entire episode before rerendering. Do not patch only the example timestamp reported by the user.
+- Keep raw media and verbose logs out of model context. Read compact manifests, targeted excerpts, and QC summaries; run deterministic local tools for media work.
 
 ## Production route
 
@@ -51,4 +61,4 @@ Never hard-code a username, home directory, model cache, or application path. Re
 
 ## Communication
 
-Write verbose logs to the episode `qc/logs/` directory. Report only start, failure, completion, artifact paths, QC exceptions, unresolved roles, and decisions requiring the user. Reuse cached analysis and synthesis artifacts; do not stream model progress or load large draft JSON into chat.
+Write verbose logs to the episode `qc/logs/` directory. Report only start, failure, completion, artifact paths, QC exceptions, unresolved roles, and decisions requiring the user. Reuse cached analysis and synthesis artifacts; do not stream model progress or load large draft JSON into chat. Keep the interaction low-token by passing paths and compact structured state between stages.

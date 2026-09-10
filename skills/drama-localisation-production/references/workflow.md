@@ -18,7 +18,7 @@ Write a compact source map and editable utterance timeline. Never paste the full
 
 ## 3. Resolve characters
 
-Match each speaking segment to the cumulative series voice library by stable character ID. Filenames are provenance, not identity. Register new episode samples as candidates; never replace `selected.wav` automatically. Put unresolved or ambiguous speakers in an approval queue.
+Match each speaking segment automatically to the cumulative series voice library by stable character ID. Combine Draft grouping, repeated material references, dialogue and scene context, picture clues, and prior episode evidence; filenames alone are provenance, not identity. Register new episode samples as candidates and write the selected mapping as an auditable approval artifact. Never replace `selected.wav` automatically. Ask the user only about unresolved or conflicting speakers.
 
 ## 4. Build performance references
 
@@ -31,7 +31,7 @@ Prefer clean, non-overlapping reference audio. Record source path, start, durati
 
 ## 5. Translate and adapt by scene
 
-Translate with scene context, relationships, titles, terminology, emotion, and target market in view. Preserve plot meaning while shortening or restructuring lines to fit their original windows. Store source text, target text, version, reviewer state, emotion, and target duration per utterance.
+Use Codex to translate with scene context, relationships, titles, terminology, emotion, and target market in view. Preserve plot meaning while shortening or restructuring lines to fit their original windows. Store source text, target text, version, execution state, emotion, and target duration per utterance. Do not stop merely because the deterministic engine represents this result as an approval artifact.
 
 ## 6. Synthesize and fit duration
 
@@ -58,4 +58,4 @@ Keep the clean picture unchanged except for the requested burned subtitles. Repl
 
 ## 10. QC and package
 
-Run deterministic validation, then human spot checks at the opening, every character change, emotional peaks, overlaps/countdowns, and the ending. Package editor and final routes separately and write a usage/time report.
+Run deterministic validation, then inspect targeted samples at the opening, every character change, emotional peaks, overlaps/countdowns, and the ending. Check full-timeline coverage rather than only reported timestamps. Package editor and final routes separately and write a usage/time report.

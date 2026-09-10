@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-Drama Localisation Studio is a local-first production tool for authorised
+CastDub is a local-first production tool for authorised
 multi-character dubbing. The program owns deterministic execution and disk
 state. An Agent Skill may operate the program, but production state must never
 depend on a chat transcript.

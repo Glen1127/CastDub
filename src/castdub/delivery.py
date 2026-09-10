@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -114,6 +115,35 @@ def _filter_path(path: Path) -> str:
     return str(path).replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _approved_picture_source(
+    work_dir: Path, job_id: str, source_video: Path | None
+) -> Path | None:
+    approval_path = work_dir / "approvals" / "picture-master.v1.json"
+    if not approval_path.is_file():
+        return source_video.resolve() if source_video else None
+    approval = json.loads(approval_path.read_text(encoding="utf-8"))
+    if approval.get("job_id") != job_id or approval.get("approved") is not True:
+        raise JobStateError(
+            "Picture master approval must match the job and be approved"
+        )
+    picture_value = approval.get("picture_master")
+    picture = Path(picture_value).expanduser().resolve() if picture_value else None
+    if picture is None or not picture.is_file():
+        raise JobStateError(f"Approved picture master is missing: {picture}")
+    expected_sha256 = str(approval.get("sha256") or "").strip()
+    if expected_sha256 and _sha256(picture) != expected_sha256:
+        raise JobStateError("Approved picture master checksum changed")
+    return picture
+
+
 def _subtitle_play_resolution(source_video: Path | None) -> tuple[int, int]:
     if source_video is None:
         return (384, 288)
@@ -159,7 +189,8 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
         raise JobStateError("Cannot render delivery with no approved takes")
     editor_dir = work_dir / "deliverables" / "editor"
     source_video = Path(job["source_video"]) if job["source_video"] else None
-    subtitle_play_resolution = _subtitle_play_resolution(source_video)
+    picture_source = _approved_picture_source(work_dir, job_id, source_video)
+    subtitle_play_resolution = _subtitle_play_resolution(picture_source)
     subtitle_paths = _write_subtitles(
         takes,
         editor_dir,
@@ -186,8 +217,8 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
 
     final_video: Path | None = None
     if job["output_mode"] == "final":
-        if source_video is None or not source_video.is_file():
-            raise JobStateError(f"Clean no-subtitle master is missing: {source_video}")
+        if picture_source is None or not picture_source.is_file():
+            raise JobStateError(f"Clean no-subtitle master is missing: {picture_source}")
         final_dir = work_dir / "deliverables" / "final"
         final_dir.mkdir(parents=True, exist_ok=True)
         final_video = final_dir / f"{job['episode_id']}.{job['target_language']}.mp4"
@@ -199,7 +230,7 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
                 "error",
                 "-y",
                 "-i",
-                str(source_video),
+                str(picture_source),
                 "-i",
                 str(mix_source),
                 "-vf",
@@ -237,6 +268,7 @@ def render_delivery(store_path: Path, job_id: str) -> dict[str, Any]:
         "timeline": str(timeline_delivery),
         **{name: str(path) for name, path in subtitle_paths.items()},
         "final_video": str(final_video) if final_video else None,
+        "picture_source": str(picture_source) if picture_source else None,
         "subtitle_style": {
             "font": "Arial",
             "font_size": 20,

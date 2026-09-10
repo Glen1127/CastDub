@@ -7,9 +7,13 @@
 - No unapproved cross-character voice reuse.
 - Spoken target text matches the final target subtitle.
 - No missing, truncated, duplicated, or overlapping lines outside intentional dialogue overlap.
+- Audible dialogue begins at its approved utterance boundary; generated leading
+  silence must not create visible delayed speech.
 - Every line fits its approved window; any tempo correction stays within project limits.
 - Original music, ambience, and effects are present without audible source-dialogue leakage that changes meaning.
 - When final-video output is requested, it uses the clean no-subtitle master and contains no source-language burned subtitles.
+- Approved timing corrections and reconstructed picture masters survive a full
+  resynthesis/mix/delivery replay.
 - Requested outputs pass their applicable duration, audio-layout, frame, dimension, and subtitle-safe-area validation.
 
 Lip sync is non-blocking in the first production phase.

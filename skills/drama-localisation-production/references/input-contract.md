@@ -25,6 +25,10 @@ resource/剧集/EP02（无字幕版）.mp4
 Editor-package and localized-draft output do not require a separate clean master. A full-duration, subtitle-free composite already inside the draft may satisfy this requirement only after duration, dimensions, edit, and subtitle absence are verified. Individual draft clips or short previews do not qualify.
 
 The clean master must match the episode, edit, duration, frame rate, and aspect ratio represented by the draft.
+Check the whole duration, especially the final scene; a filename containing
+“无字幕版” is not evidence that every frame is subtitle-free. If only part of the
+master is contaminated, reconstruct that interval from matching Draft picture
+segments, checksum it, and approve it as the job picture master before delivery.
 
 ## Optional inputs
 

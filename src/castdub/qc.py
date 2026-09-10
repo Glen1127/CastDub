@@ -270,8 +270,11 @@ def run_delivery_qc(
         if style != expected_style:
             failures.append("burned-subtitle style differs from the approved safe area")
         expected_resolution = {"width": 384, "height": 288}
-        if job.get("source_video"):
-            source_probe_for_style = _probe(Path(job["source_video"]))
+        picture_source_value = deliverables.get("picture_source") or job.get(
+            "source_video"
+        )
+        if picture_source_value:
+            source_probe_for_style = _probe(Path(picture_source_value))
             source_style_stream = next(
                 stream
                 for stream in source_probe_for_style["streams"]
@@ -292,7 +295,7 @@ def run_delivery_qc(
                 failures.append("final mode is missing the rendered MP4")
             else:
                 final_probe = _probe(final_video)
-                source_probe = _probe(Path(job["source_video"]))
+                source_probe = _probe(Path(picture_source_value))
                 final_video_stream = next(
                     stream
                     for stream in final_probe["streams"]

@@ -39,6 +39,27 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     )
 
 
+def _load_timing_corrections(
+    work_dir: Path, job_id: str
+) -> dict[str, dict[str, Any]]:
+    approval_path = work_dir / "approvals" / "timing-corrections.v1.json"
+    if not approval_path.is_file():
+        return {}
+    approval = json.loads(approval_path.read_text(encoding="utf-8"))
+    if approval.get("job_id") != job_id or approval.get("approved") is not True:
+        raise JobStateError("Timing corrections must match the job and be approved")
+    items = approval.get("corrections", [])
+    by_utterance = {item.get("utterance_id"): item for item in items}
+    if len(items) != len(by_utterance) or None in by_utterance:
+        raise JobStateError("Timing corrections must identify each utterance exactly once")
+    for utterance_id, item in by_utterance.items():
+        if int(item.get("new_start_ms", -1)) < 0:
+            raise JobStateError(f"Invalid corrected start for {utterance_id}")
+        if not str(item.get("reason") or "").strip():
+            raise JobStateError(f"Timing correction reason is missing for {utterance_id}")
+    return by_utterance
+
+
 def _duration_ms(path: Path) -> int:
     result = subprocess.run(
         [
@@ -60,7 +81,13 @@ def _duration_ms(path: Path) -> int:
 
 def _fit_duration(source: Path, output: Path, target_ms: int, tempo: float) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
-    filters = []
+    # TTS providers may emit a variable silent lead-in.  The timeline anchors
+    # the audible utterance, so retain only a short natural pre-roll instead of
+    # turning provider latency into visible dialogue delay.
+    filters = [
+        "silenceremove=start_periods=1:start_duration=0.04:"
+        "start_threshold=-40dB:start_silence=0.12"
+    ]
     if tempo > 1:
         filters.append(f"rubberband=tempo={tempo:.6f}")
     filters.extend(("apad", f"atrim=duration={target_ms / 1000:.3f}"))
@@ -116,10 +143,26 @@ def synthesize_episode(
     performance_rows = _read_jsonl(
         work_dir / "performance" / "analysed.v1.jsonl"
     )
+    timing_corrections = _load_timing_corrections(work_dir, job_id)
+    unknown_corrections = set(timing_corrections) - {
+        row["utterance_id"] for row in performance_rows
+    }
+    if unknown_corrections:
+        raise JobStateError(
+            "Timing correction references unknown utterance: "
+            + ", ".join(sorted(unknown_corrections))
+        )
     stable_references: dict[str, str] = {}
     requests: list[dict[str, Any]] = []
     for row in performance_rows:
         character_id = row["character_id"]
+        timing_correction = timing_corrections.get(row["utterance_id"])
+        start_ms = (
+            int(timing_correction["new_start_ms"])
+            if timing_correction
+            else int(row["start_ms"])
+        )
+        target_duration_ms = int(row["target_duration_ms"])
         profile_path = work_dir / "voice-profiles" / character_id / "profile.json"
         if not profile_path.is_file():
             raise JobStateError(f"Approved voice profile is missing: {character_id}")
@@ -155,9 +198,10 @@ def synthesize_episode(
                 "character_id": character_id,
                 "target_language": job["target_language"],
                 "target_text": row["approved_target_text"],
-                "start_ms": row["start_ms"],
-                "end_ms": row["end_ms"],
-                "target_duration_ms": row["target_duration_ms"],
+                "start_ms": start_ms,
+                "end_ms": start_ms + target_duration_ms,
+                "target_duration_ms": target_duration_ms,
+                "timing_correction": timing_correction,
                 "stable_voice_reference": str(stable_reference),
                 "stable_reference_text": stable_reference_text,
                 "performance_reference": str(performance_reference),
@@ -255,6 +299,7 @@ def synthesize_episode(
         "needs_text_adaptation": rejected,
         "reused_raw_takes": len(requests) - len(pending_requests),
         "maximum_tempo_ratio": MAX_TEMPO_RATIO,
+        "timing_correction_count": len(timing_corrections),
         "takes": str(timeline_path),
     }
     manifest_path.write_text(

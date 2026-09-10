@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
-import sys
+import wave
+from array import array
 from pathlib import Path
 from unittest.mock import patch
 
 from castdub.jobs import advance_episode_job, create_episode_job, episode_work_dir
-from castdub.synthesis import QwenMlxSubprocessProvider, synthesize_episode
+from castdub.synthesis import (
+    QwenMlxSubprocessProvider,
+    _fit_duration,
+    synthesize_episode,
+)
 from castdub.synthesis_worker import _voice_identity_prompt
 
 
@@ -109,6 +116,35 @@ def _create_job(root: Path) -> tuple[Path, dict[str, object]]:
 
 
 class SynthesisTests(unittest.TestCase):
+    def test_duration_fit_caps_generated_leading_silence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.wav"
+            output = root / "fitted.wav"
+            subprocess.run(
+                [
+                    "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                    "-f", "lavfi", "-t", "0.6", "-i",
+                    "anullsrc=r=24000:cl=mono",
+                    "-f", "lavfi", "-t", "0.6", "-i",
+                    "sine=frequency=440:sample_rate=24000",
+                    "-filter_complex", "[0:a][1:a]concat=n=2:v=0:a=1[a]",
+                    "-map", "[a]", str(source),
+                ],
+                check=True,
+            )
+
+            _fit_duration(source, output, 1200, 1.0)
+
+            with wave.open(str(output), "rb") as fitted:
+                samples = array("h", fitted.readframes(fitted.getnframes()))
+                onset = next(
+                    index for index, value in enumerate(samples) if abs(value) > 100
+                )
+                onset_seconds = onset / fitted.getframerate()
+            self.assertLessEqual(onset_seconds, 0.16)
+            self.assertGreaterEqual(onset_seconds, 0.06)
+
     def test_preserves_virtual_environment_python_symlink(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -159,6 +195,39 @@ class SynthesisTests(unittest.TestCase):
                     "stable_reference_text": None,
                 }
             )
+
+    @patch("castdub.synthesis._fit_duration")
+    @patch("castdub.synthesis._duration_ms", return_value=2100)
+    def test_approved_timing_correction_survives_resynthesis(
+        self, duration: object, fit: object
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store, job = _create_job(Path(directory))
+            work_dir = episode_work_dir(store, job)
+            approvals = work_dir / "approvals"
+            approvals.mkdir(parents=True, exist_ok=True)
+            (approvals / "timing-corrections.v1.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "job_id": job["job_id"],
+                        "approved": True,
+                        "corrections": [
+                            {
+                                "utterance_id": "line-1",
+                                "new_start_ms": 125,
+                                "reason": "restore complete utterance boundary",
+                            }
+                        ],
+                    }
+                )
+            )
+
+            result = synthesize_episode(store, job["job_id"], FakeTTS(2100))
+            row = json.loads(Path(result["takes"]).read_text().splitlines()[0])
+            self.assertEqual(row["start_ms"], 125)
+            self.assertEqual(row["end_ms"], 2125)
+            self.assertEqual(row["timing_correction"]["new_start_ms"], 125)
 
     @patch("castdub.synthesis._duration_ms", return_value=2500)
     def test_overlong_take_requires_text_adaptation_without_advancing(self, duration: object) -> None:

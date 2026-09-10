@@ -22,10 +22,16 @@ Match each speaking segment automatically to the cumulative series voice library
 
 ## 4. Build performance references
 
-Maintain two layers:
+Maintain two layers without conflating them:
 
 - stable character reference for cross-episode timbre;
 - episode performance reference for line-level emotion, pace, pauses, breaths, and delivery.
+
+For Qwen3-TTS Base, the stable character sample and its exact transcript are the
+voice-cloning prompt. Do not replace that prompt with the per-line performance
+audio; doing so changes identity between lines. Performance audio may drive
+emotion/event descriptors and duration decisions. A provider may consume both
+only after its identity-safe multi-conditioning path has been explicitly tested.
 
 Prefer clean, non-overlapping reference audio. Record source path, start, duration, transcript, character, and approval state.
 
@@ -35,7 +41,11 @@ Use Codex to translate with scene context, relationships, titles, terminology, e
 
 ## 6. Synthesize and fit duration
 
-Generate each line from its approved character profile plus the best available episode performance reference. Measure actual speech after trimming silence. If a line overruns:
+Generate each line from its approved stable character profile and the approved
+performance descriptors. Cap provider-generated leading silence to a short
+natural pre-roll before placing the take on the timeline. Persist any approved
+utterance-boundary repair in `approvals/timing-corrections.v1.json`; resynthesis
+must apply it before mixing and subtitle generation. If a line overruns:
 
 1. improve the target-language adaptation;
 2. adjust punctuation and pauses;
@@ -54,7 +64,14 @@ Create captions from the approved target script and final synthesized speech bou
 
 ## 9. Render from the clean master
 
-Keep the clean picture unchanged except for the requested burned subtitles. Replace audio with the full mix. Default subtitle style: bottom-centre, `Alignment=2`, `MarginV=18`, white text, dark outline, safe readable size. Do not use the draft as the mandatory final renderer.
+Keep the clean picture unchanged except for the requested burned subtitles. If
+the supplied master contains source subtitles in any interval, reconstruct the
+affected picture from matching Draft video segments and record the approved,
+checksummed result in `approvals/picture-master.v1.json`. Delivery must reuse
+that approved picture on every rerender instead of falling back to the original
+contaminated file. Replace audio with the full mix. Default subtitle style:
+bottom-centre, `Alignment=2`, `MarginV=18`, white text, dark outline, safe
+readable size. Do not use the draft as the mandatory final renderer.
 
 ## 10. QC and package
 

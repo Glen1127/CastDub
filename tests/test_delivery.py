@@ -142,6 +142,37 @@ class DeliveryTests(unittest.TestCase):
             self.assertGreater(max(frame), 100)
             self.assertTrue(render_delivery(store, job["job_id"])["cache_hit"])
 
+    def test_final_package_uses_approved_reconstructed_picture(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store, job = _create_job(root, "final")
+            work_dir = episode_work_dir(store, job)
+            reconstructed = root / "reconstructed-clean.mp4"
+            subprocess.run(
+                [
+                    "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                    "-f", "lavfi", "-i", "color=c=red:s=320x240:d=2",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", str(reconstructed),
+                ],
+                check=True,
+            )
+            approvals = work_dir / "approvals"
+            approvals.mkdir(parents=True, exist_ok=True)
+            (approvals / "picture-master.v1.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "job_id": job["job_id"],
+                        "approved": True,
+                        "picture_master": str(reconstructed),
+                    }
+                )
+            )
+
+            result = render_delivery(store, job["job_id"])
+
+            self.assertEqual(result["picture_source"], str(reconstructed.resolve()))
+
 
 if __name__ == "__main__":
     unittest.main()

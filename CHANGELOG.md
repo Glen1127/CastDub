@@ -22,6 +22,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   performance reference. This prevents same-character timbre drift.
 - Made the release check select the current version's wheel and source archive
   when older build artifacts are also present in `dist/`.
+- Persisted approved utterance-boundary corrections across resynthesis and
+  capped provider-generated leading silence before timeline placement.
+- Added an approved, checksummed picture-master override so reconstructed
+  subtitle-free footage survives every final-video rerender.
 
 ### Compatibility
 

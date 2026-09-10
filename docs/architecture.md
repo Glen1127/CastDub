@@ -12,9 +12,14 @@ Workers exchange small JSON job descriptions and filesystem artifact paths. Mode
 
 Identity and performance are separate controls. A character's approved stable
 reference is immutable during an episode. A per-line performance reference may
-be used only when it came from that same approved character. The Qwen3-TTS Base
-worker receives that source line and its transcript to carry delivery cues;
-the stable reference remains the identity anchor and QC comparison source.
+be used only when it came from that same approved character. Qwen3-TTS receives
+the stable reference and its exact transcript as the cloning prompt. After each
+take, the worker compares the generated speaker embedding against every approved
+character profile in the episode. A take long enough for reliable comparison is
+accepted only when the intended character is the closest match and meets the
+similarity floor; otherwise the worker retries with bounded generation settings
+and fails closed. Very short interjections are recorded as unevaluable rather
+than reported as identity matches.
 
 Duration fitting is deterministic. Shorter takes receive trailing silence;
 small overruns may use formant-preserving Rubber Band correction. An overrun

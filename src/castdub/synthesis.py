@@ -39,6 +39,20 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     )
 
 
+def _identity_sidecar_path(raw_path: Path) -> Path:
+    return raw_path.with_suffix(".identity.json")
+
+
+def _load_identity_qc(raw_path: Path) -> dict[str, Any] | None:
+    sidecar_path = _identity_sidecar_path(raw_path)
+    if not sidecar_path.is_file():
+        return None
+    payload = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    if payload.get("passed") is not True:
+        raise JobStateError(f"Speaker identity QC did not pass: {sidecar_path}")
+    return payload
+
+
 def _load_timing_corrections(
     work_dir: Path, job_id: str
 ) -> dict[str, dict[str, Any]]:
@@ -153,6 +167,7 @@ def synthesize_episode(
             + ", ".join(sorted(unknown_corrections))
         )
     stable_references: dict[str, str] = {}
+    episode_voice_profiles: dict[str, str] = {}
     requests: list[dict[str, Any]] = []
     for row in performance_rows:
         character_id = row["character_id"]
@@ -179,6 +194,15 @@ def synthesize_episode(
                 "cannot share one stable voice reference"
             )
         stable_references[reference_key] = character_id
+        previous_character_reference = episode_voice_profiles.get(character_id)
+        if (
+            previous_character_reference is not None
+            and previous_character_reference != reference_key
+        ):
+            raise JobStateError(
+                f"Character {character_id} cannot use multiple stable voice references"
+            )
+        episode_voice_profiles[character_id] = reference_key
         stable_reference_text = str(
             profile.get("stable_reference_text") or ""
         ).strip()
@@ -212,6 +236,9 @@ def synthesize_episode(
             }
         )
 
+    for request in requests:
+        request["identity_profile_references"] = dict(episode_voice_profiles)
+
     previous_rows = _read_jsonl(timeline_path) if timeline_path.is_file() else []
     previous_by_id = {row["utterance_id"]: row for row in previous_rows}
     generation_fields = (
@@ -223,6 +250,7 @@ def synthesize_episode(
         "reference_text",
         "emotion",
         "emotion_intensity",
+        "identity_profile_references",
     )
     raw_by_id: dict[str, Path] = {}
     pending_requests: list[dict[str, Any]] = []
@@ -263,6 +291,7 @@ def synthesize_episode(
                 f"TTS output is missing for {request['utterance_id']}: {raw_path}"
             )
         raw_duration = _duration_ms(raw_path)
+        identity_qc = _load_identity_qc(raw_path)
         target_duration = int(request["target_duration_ms"])
         tempo = raw_duration / target_duration if raw_duration > target_duration else 1.0
         accepted = tempo <= MAX_TEMPO_RATIO
@@ -281,6 +310,7 @@ def synthesize_episode(
                 "model_revision": provider.model_revision,
                 "raw_path": str(raw_path),
                 "raw_duration_ms": raw_duration,
+                "identity_qc": identity_qc,
                 "tempo_ratio": round(tempo, 6),
                 "fitted_path": str(fitted_path) if fitted_path else None,
                 "fitted_duration_ms": target_duration if fitted_path else None,

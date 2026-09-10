@@ -16,7 +16,11 @@ from castdub.synthesis import (
     _fit_duration,
     synthesize_episode,
 )
-from castdub.synthesis_worker import _voice_identity_prompt
+from castdub.synthesis_worker import (
+    _identity_sidecar_path,
+    _select_identity_candidate,
+    _voice_identity_prompt,
+)
 
 
 class FakeTTS:
@@ -172,6 +176,10 @@ class SynthesisTests(unittest.TestCase):
             self.assertAlmostEqual(rows[0]["tempo_ratio"], 1.05)
             request = rows[0]
             self.assertEqual(request["stable_reference_text"], "我是固定角色声音")
+            self.assertEqual(
+                request["identity_profile_references"],
+                {"lead": request["stable_voice_reference"]},
+            )
             self.assertTrue(synthesize_episode(store, job["job_id"], FakeTTS(2100))["cache_hit"])
 
     def test_worker_uses_stable_identity_reference_not_line_performance(self) -> None:
@@ -195,6 +203,32 @@ class SynthesisTests(unittest.TestCase):
                     "stable_reference_text": None,
                 }
             )
+
+    def test_identity_qc_rejects_candidate_closer_to_another_character(self) -> None:
+        with self.assertRaisesRegex(ValueError, "identity QC"):
+            _select_identity_candidate(
+                [
+                    {
+                        "target_similarity": 0.97,
+                        "target_margin": -0.01,
+                    }
+                ]
+            )
+
+    def test_identity_qc_selects_best_passing_candidate(self) -> None:
+        selected = _select_identity_candidate(
+            [
+                {"attempt": 1, "target_similarity": 0.94, "target_margin": 0.02},
+                {"attempt": 2, "target_similarity": 0.96, "target_margin": 0.01},
+                {"attempt": 3, "target_similarity": 0.97, "target_margin": 0.03},
+            ]
+        )
+        self.assertEqual(selected["attempt"], 3)
+
+    def test_identity_sidecar_does_not_replace_audio_extension_twice(self) -> None:
+        self.assertEqual(
+            _identity_sidecar_path(Path("line.wav")), Path("line.identity.json")
+        )
 
     @patch("castdub.synthesis._fit_duration")
     @patch("castdub.synthesis._duration_ms", return_value=2100)

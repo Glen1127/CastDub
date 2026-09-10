@@ -26,6 +26,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   capped provider-generated leading silence before timeline placement.
 - Added an approved, checksummed picture-master override so reconstructed
   subtitle-free footage survives every final-video rerender.
+- Validate each generated Qwen take against every approved episode voice
+  profile, retry identity drift automatically, and fail closed when no
+  candidate preserves the intended character.
 
 ### Compatibility
 

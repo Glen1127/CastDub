@@ -278,6 +278,12 @@ PYTHONPATH=src python -m castdub synthesize \
   --model-revision APPROVED_REVISION
 ```
 
+The worker validates the generated waveform against all approved episode voice
+profiles. A long-enough take is regenerated when its intended character is not
+the closest match or its similarity is below the safety floor. Exhausted retries
+stop synthesis; short interjections are explicitly marked as unevaluable. The
+candidate scores and selected take are saved in an identity-QC sidecar.
+
 Takes that exceed the target window by more than 12% stop for text adaptation;
 they are not forcibly accelerated. After auditioning every generated take,
 approve the unchanged take set before mixing:

@@ -2,18 +2,7 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## 1.0.0 - 2026-09-10
-
-### Added
-
-- CastDub — Codex Edition product identity and natural-language quick start.
-- Codex Production Skill guidance for automatic character resolution, scene
-  translation and duration adaptation, voice-reference selection, complete
-  timeline repair, and low-token execution.
-- One-command local installation of the bundled Production Skill.
-- Explicit local Qwen3-TTS/MLX and SenseVoice worker installers, with model
-  licence gates, pinned runtimes, receipts, and full resource estimates.
-- Chinese-first GitHub landing page with an authorised EP02 A/B demonstration.
+## 1.0.1 - 2026-09-10
 
 ### Fixed
 
@@ -29,11 +18,26 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Validate each generated Qwen take against every approved episode voice
   profile, retry identity drift automatically, and fail closed when no
   candidate preserves the intended character.
+- Replaced the short EP02 download demo with a 48-second, directly playable
+  Chinese/English comparison rendered from the corrected final output.
 
 ### Compatibility
 
 - Kept the `castdub` CLI, Python package name, production directories, job
   schema, Skill directory, and existing episode assets unchanged.
+
+## 1.0.0 - 2026-09-10
+
+### Added
+
+- CastDub — Codex Edition product identity and natural-language quick start.
+- Codex Production Skill guidance for automatic character resolution, scene
+  translation and duration adaptation, voice-reference selection, complete
+  timeline repair, and low-token execution.
+- One-command local installation of the bundled Production Skill.
+- Explicit local Qwen3-TTS/MLX and SenseVoice worker installers, with model
+  licence gates, pinned runtimes, receipts, and full resource estimates.
+- Chinese-first GitHub landing page with an authorised EP02 A/B demonstration.
 
 ## 0.1.0 - 2026-09-09
 

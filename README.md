@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/Glen1127/CastDub)](https://github.com/Glen1127/CastDub/releases/latest)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-3776AB)](https://www.python.org/)
 [![License](https://img.shields.io/badge/Code-Apache--2.0-blue)](LICENSE)
-[![Edition](https://img.shields.io/badge/Codex%20Edition-v1.0-111827)](https://github.com/Glen1127/CastDub/releases/tag/v1.0.0)
+[![Edition](https://img.shields.io/badge/Codex%20Edition-v1.0-111827)](https://github.com/Glen1127/CastDub/releases/latest)
 
 [中文说明](#项目特点) · [English](#english)
 
@@ -33,9 +33,9 @@ Codex 会智能执行 Draft 解析、角色与跨集声音匹配、影视化翻�
   </tr>
 </table>
 
-▶ **[观看 8 秒中英配音 A/B 对比](https://github.com/Glen1127/CastDub/releases/download/v1.0.0/EP02.zh-en-US.comparison.mp4)**
+https://github.com/user-attachments/assets/6e6a42d0-c192-4bfa-b1b0-c5913c5e3896
 
-画面始终左右并排；前 4 秒播放中文原声，后 4 秒播放英文配音，方便直接比较声音、情绪、气口和时长。
+48 秒演示始终左右并排；前 24 秒播放中文原声，后 24 秒播放英文配音，覆盖多角色对白、背景声、情绪、气口与时间线同步。点击播放器即可观看，无需下载文件。
 
 > EP02 截图与试听片段经权利人许可，仅用于展示本项目效果；不属于 Apache-2.0 授权范围，未经许可不得复用或再发布。
 
